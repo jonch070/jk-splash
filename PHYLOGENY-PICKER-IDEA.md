@@ -67,3 +67,12 @@ workItems = [
 ## Responsive Layout
 - **Desktop**: Graph on right, thumbnail grid on left (side by side)
 - **Mobile**: Graph on top OR bottom, thumbnails below/above (stacked)
+
+## Jekyll Setup (Yes! Easily editable)
+Just edit JSON file, no code needed:
+```
+_data/
+  work.json         # Your work data
+_includes/
+  phylogeny-graph.html  # D3 visualization
+```
