@@ -65,5 +65,5 @@ workItems = [
 - Show all by default, filter on click
 
 ## Responsive Layout
-- **Desktop**: Graph on left, thumbnail grid on right (side by side)
+- **Desktop**: Graph on right, thumbnail grid on left (side by side)
 - **Mobile**: Graph on top OR bottom, thumbnails below/above (stacked)
