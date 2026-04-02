@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jonathan Kawchuk — Composer & Sound Artist</title>
   <meta name="description" content="Composer, sound artist, field recordist. Founder of Quiet Parks International. Emmy-winning, 2x CASMA. Based in Canada.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23000' width='100' height='100'/><text y='70' x='50%' text-anchor='middle' fill='%23fff' font-family='monospace' font-size='60'>[j]</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23000' width='100' height='100'/><text y='70' x='50%' text-anchor='middle' fill='%23fff' font-size='60'>⛰</text></svg>">
   <style>
     @font-face {
       font-family: 'Dax';
@@ -139,6 +139,8 @@
       padding: 0.75rem 0;
       border-bottom: 1px solid var(--border);
       max-width: 500px;
+      align-items: baseline;
+      gap: 0.5rem;
     }
 
     .work-item:first-child {
@@ -283,19 +285,26 @@
       }
 
       .scatter-zone {
-        height: 300px;
+        position: relative !important;
+        right: auto !important;
+        top: auto !important;
+        width: 100% !important;
+        height: 250px !important;
+        margin-top: 2rem;
       }
 
-      .s1, .s2, .s3, .s4, .s5, .s6 {
-        transform: scale(0.6);
+      .scatter-zone img {
+        width: 120px !important;
+        opacity: 0.4 !important;
       }
 
-      .s1 { left: -5%; top: 0; }
-      .s2 { left: 20%; top: -5%; }
-      .s3 { left: 50%; top: 5%; }
-      .s4 { left: 70%; top: 0; }
-      .s5 { left: 5%; top: 45%; }
-      .s6 { left: 40%; top: 40%; }
+      .diary-entry {
+        margin-bottom: 1rem;
+      }
+
+      .diary-entry a {
+        font-size: 0.85rem;
+      }
 
       .work-item {
         flex-direction: column;
@@ -307,7 +316,7 @@
 <body>
 
   <nav>
-    <a href="#" class="logo" onclick="showSection('home'); return false;">[jk]</a>
+    <a href="#" class="logo" onclick="showSection('home'); return false;">⛰</a>
     <div class="nav-links">
       <a href="#" onclick="showSection('work'); return false;">work</a>
       <a href="#" onclick="showSection('quiet'); return false;">quiet</a>
@@ -341,20 +350,34 @@
     <div class="work-list">
       <h2>work</h2>
       <div class="work-item">
+        <span class="cat-tag">[film]</span>
         <a href="#" class="title">everywhen</a>
         <span class="meta">installation — phi centre, imax</span>
       </div>
       <div class="work-item">
+        <span class="cat-tag">[score]</span>
         <a href="#" class="title">north</a>
         <span class="meta">project</span>
       </div>
       <div class="work-item">
+        <span class="cat-tag">[install]</span>
         <a href="#" class="title">installation</a>
         <span class="meta">select installations</span>
       </div>
       <div class="work-item">
-        <a href="#" class="title">film</a>
-        <span class="meta">composition + score</span>
+        <span class="cat-tag">[score]</span>
+        <a href="#" class="title">hunt for the oldest dna</a>
+        <span class="meta">score — national geographic</span>
+      </div>
+      <div class="work-item">
+        <span class="cat-tag">[album]</span>
+        <a href="#" class="title">mountains</a>
+        <span class="meta">self-released</span>
+      </div>
+      <div class="work-item">
+        <span class="cat-tag">[field]</span>
+        <a href="#" class="title">field recording</a>
+        <span class="meta">travel, landscape</span>
       </div>
     </div>
 
@@ -426,6 +449,17 @@
 
     <div class="about-block" style="display: block; margin-bottom: 1.5rem;">
       <p>some thoughts on silence, place, and the spaces between.</p>
+    </div>
+
+    <div class="diary-entry" style="margin-bottom: 1.5rem;">
+      <span style="color: var(--text-muted); font-size: 0.8rem;">2024.03.15</span>
+      <a href="https://soundcloud.com/suzumenotears/kawaigaranse-harikuyamaku" target="_blank" style="display: block; margin-top: 0.3rem;">川いかされんせはりくやまく / kawaigaranse-harikuyamaku</a>
+    </div>
+
+    <div class="diary-entry" style="margin-bottom: 1.5rem;">
+      <iframe width="100%" height="80" scrolling="no" frameborder="no" allow="autoplay" 
+        src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/2094584943&color=%23f0f0f0&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false">
+      </iframe>
     </div>
 
     <div class="about-block" style="display: block; margin-bottom: 1.5rem;">
