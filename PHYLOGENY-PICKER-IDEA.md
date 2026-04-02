@@ -17,7 +17,16 @@ Interactive hierarchical visualization that acts as a **filter/selector** for wo
 ## Visual Style Reference
 - https://www.biostars.org/p/9582433/ (rectangular phylogenetic tree)
 - https://www.data-to-viz.com/graph/edge_bundling.html (D3 hierarchical edge bundling)
-- Horizontal tree with connecting lines → curves like cables
+
+## Alternative Visualizations (all using same data)
+From https://www.data-to-viz.com/ - all work with same resume data:
+
+- **Dendrogram** - tree structure, upside down
+- **Circular dendrogram** - tree in circle  
+- **Hierarchical edge bundling** - curves following hierarchy (recommended)
+- **Treemap** - nested rectangles
+- **Sunburst** - circular treemap
+- **Circle packing** - circles inside circles
 
 ## Resume Data (seed)
 ```
@@ -42,52 +51,19 @@ work/
 ## Data Structure
 ```javascript
 workItems = [
-  {
-    id: 'everywhen',
-    title: 'everywhen',
-    categories: ['film', 'install'],
-    thumbnail: 'everywhen.jpg',
-    year: 2024,
-    description: 'installation — phi centre, imax'
-  },
-  {
-    id: 'hunt-for-oldest-dna',
-    title: 'hunt for the oldest dna',
-    categories: ['score', 'film'],
-    thumbnail: 'dna.jpg',
-    year: 2023,
-    description: 'score — national geographic, emmy'
-  },
-  {
-    id: 'mountains',
-    title: 'mountains',
-    categories: ['album'],
-    thumbnail: 'mountains.jpg',
-    year: 2022,
-    description: 'self-released'
-  },
+  { id: 'everywhen', title: 'everywhen', categories: ['film', 'install'], thumbnail: 'everywhen.jpg', year: 2024 },
+  { id: 'hunt-for-oldest-dna', title: 'hunt for the oldest dna', categories: ['score', 'film'], thumbnail: 'dna.jpg', year: 2023 },
+  { id: 'mountains', title: 'mountains', categories: ['album'], thumbnail: 'mountains.jpg', year: 2022 },
   // ... etc
 ]
-
-taxonomy = {
-  root: 'work',
-  children: [
-    { id: 'film', label: '[film]', children: ['everywhen', 'north', 'installation'] },
-    { id: 'score', label: '[score]', children: ['hunt-for-oldest-dna'] },
-    { id: 'album', label: '[album]', children: ['mountains', 'december'] },
-    { id: 'field', label: '[field]', children: ['recordings'] },
-    { id: 'quiet', label: '[quiet]', children: ['quiet-parks', 'narwhal'] }
-  ]
-}
 ```
 
 ## Implementation
-- D3.js for hierarchical edge bundling, OR
-- Simple CSS/HTML tree (easier to maintain)
+- D3.js for complex visualizations
+- Simple CSS/HTML tree for easier maintenance
 - Filter thumbnails based on selected node
 - Show all by default, filter on click
 
-## Future
-- Could add edge bundling for relationships between items
-- Could animate thumbnails in/out on filter
-- Could add "AND" / "OR" filtering (e.g., film AND 2024)
+## Responsive Layout
+- **Desktop**: Graph on left, thumbnail grid on right (side by side)
+- **Mobile**: Graph on top OR bottom, thumbnails below/above (stacked)
