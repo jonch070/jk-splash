@@ -1,0 +1,46 @@
+<!-- PHYLOGENY - RECTANGULAR TREE (scientific diagram style) -->
+<style>
+.phylo-container { width: 100%; max-width: 650px; overflow-x: auto; padding: 1.5rem 0; }
+.phylo-tree-rect { display: flex; flex-direction: row; gap: 0; }
+.phylo-col { display: flex; flex-direction: column; position: relative; }
+.phylo-col-root { min-width: 60px; padding-right: 15px; }
+.phylo-col-level1 { min-width: 90px; padding-right: 20px; }
+.phylo-col-level2 { min-width: 160px; padding-right: 20px; }
+.phylo-col-level3 { min-width: 120px; }
+.phylo-node-rect { padding: 0.3rem 0; position: relative; white-space: nowrap; }
+.phylo-label { font-size: 0.7rem; color: #888; letter-spacing: 0.05em; }
+.phylo-name { font-size: 0.8rem; color: #ccc; text-decoration: none; }
+.phylo-name:hover { color: #fff; }
+.phylo-note { font-size: 0.6rem; color: #666; margin-left: 0.5rem; }
+.phylo-col-root .phylo-node-rect::after, .phylo-col-level1 .phylo-node-rect::after { content: ''; position: absolute; right: 0; top: 50%; width: 20px; height: 1px; background: #444; }
+</style>
+
+<div class="phylo-container">
+  <div class="phylo-tree-rect">
+    <div class="phylo-col phylo-col-root">
+      <div class="phylo-node-rect"><span class="phylo-label">work</span></div>
+    </div>
+    <div class="phylo-col phylo-col-level1">
+      <div class="phylo-node-rect"><a href="#" class="phylo-name">[film]</a></div>
+      <div class="phylo-node-rect"><a href="#" class="phylo-name">[score]</a></div>
+      <div class="phylo-node-rect"><a href="#" class="phylo-name">[album]</a></div>
+      <div class="phylo-node-rect"><a href="#" class="phylo-name">[field]</a></div>
+    </div>
+    <div class="phylo-col phylo-col-level2">
+      <div class="phylo-node-rect"><a href="#" class="phylo-name">everywhen</a><span class="phylo-note">phi centre</span></div>
+      <div class="phylo-node-rect"><a href="#" class="phylo-name">north</a><span class="phylo-note">project</span></div>
+      <div class="phylo-node-rect"><a href="#" class="phylo-name">hunt for oldest dna</a><span class="phylo-note">nat geo</span></div>
+      <div class="phylo-node-rect"><a href="#" class="phylo-name">mountains</a><span class="phylo-note">self</span></div>
+      <div class="phylo-node-rect"><a href="#" class="phylo-name">december</a><span class="phylo-note">self</span></div>
+      <div class="phylo-node-rect"><a href="#" class="phylo-name">recordings</a><span class="phylo-note">travel</span></div>
+    </div>
+    <div class="phylo-col phylo-col-level3">
+      <div class="phylo-node-rect"><span class="phylo-note">imax</span></div>
+      <div class="phylo-node-rect"><span class="phylo-note">doc</span></div>
+      <div class="phylo-node-rect"><span class="phylo-note">emmy</span></div>
+      <div class="phylo-node-rect"><span class="phylo-note">2024</span></div>
+      <div class="phylo-node-rect"><span class="phylo-note">2023</span></div>
+      <div class="phylo-node-rect"><span class="phylo-note">ongoing</span></div>
+    </div>
+  </div>
+</div>
