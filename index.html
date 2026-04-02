@@ -163,16 +163,13 @@
 
     .scatter-img {
       position: absolute;
-      border: 0.5px solid var(--border);
-      overflow: hidden;
+      overflow: visible;
     }
 
     .scatter-img img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
-      filter: grayscale(100%);
-      transition: filter 0.4s ease, transform 0.4s ease;
+      object-fit: contain;
     }
 
     .scatter-img:hover img {
@@ -361,22 +358,12 @@
       </div>
     </div>
 
-    <div class="scatter-zone" style="position: absolute; right: 5%; top: 280px; width: 400px; height: 400px;">
-      <div class="scatter-img" style="left: 5%; top: 10%; width: 140px; height: 180px; opacity: 0.5;">
-        <img src="images/maiella-sphere-1775105117221.png" alt="Maiella 1">
-      </div>
-      <div class="scatter-img" style="left: 40%; top: 5%; width: 150px; height: 120px; opacity: 0.5;">
-        <img src="images/maiella-sphere-1775105172314.png" alt="Maiella 2">
-      </div>
-      <div class="scatter-img" style="left: 70%; top: 30%; width: 120px; height: 160px; opacity: 0.5;">
-        <img src="images/maiella-sphere-1775105256404.png" alt="Maiella 3">
-      </div>
-      <div class="scatter-img" style="left: 20%; top: 50%; width: 130px; height: 150px; opacity: 0.5;">
-        <img src="images/maiella-sphere-1775105302801.png" alt="Maiella 4">
-      </div>
-      <div class="scatter-img" style="left: 55%; top: 60%; width: 140px; height: 110px; opacity: 0.5;">
-        <img src="images/maiella-sphere-1775105312597.png" alt="Maiella 5">
-      </div>
+    <div class="scatter-zone" style="position: absolute; right: 12%; top: 280px; width: 450px; height: 400px;">
+      <img src="images/maiella-sphere-1775105117221.png" alt="Maiella 1" style="position: absolute; left: 0%; top: 10%; width: 280px; opacity: 0.5;">
+      <img src="images/maiella-sphere-1775105172314.png" alt="Maiella 2" style="position: absolute; left: 30%; top: 5%; width: 300px; opacity: 0.5;">
+      <img src="images/maiella-sphere-1775105256404.png" alt="Maiella 3" style="position: absolute; left: 60%; top: 30%; width: 240px; opacity: 0.5;">
+      <img src="images/maiella-sphere-1775105302801.png" alt="Maiella 4" style="position: absolute; left: 10%; top: 50%; width: 260px; opacity: 0.5;">
+      <img src="images/maiella-sphere-1775105312597.png" alt="Maiella 5" style="position: absolute; left: 45%; top: 60%; width: 280px; opacity: 0.5;">
     </div>
   </section>
 
