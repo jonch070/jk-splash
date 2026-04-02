@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jonathan Kawchuk — Composer & Sound Artist</title>
+  <meta name="description" content="Composer, sound artist, field recordist. Founder of Quiet Parks International. Emmy-winning, 2x CASMA. Based in Canada.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23000' width='100' height='100'/><text y='70' x='50%' text-anchor='middle' fill='%23fff' font-family='monospace' font-size='60'>[j]</text></svg>">
+  <style>
+    @font-face {
+      font-family: 'Dax';
+      src: url('https://raw.githubusercontent.com/akhaku/lcstutoring/master/tutoringapp/static/fonts/Dax-Regular.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Dax';
+      src: url('https://raw.githubusercontent.com/akhaku/lcstutoring/master/tutoringapp/static/fonts/Dax-Bold.ttf') format('truetype');
+      font-weight: 700;
+      font-style: normal;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --text: #f0f0f0;
+      --text-muted: #888;
+      --diary-bg: #f0f0f0;
+      --diary-text: #0a0a0a;
+      --border: #2a2a2a;
+    }
+
+    html {
+      font-family: 'Dax', 'Space Mono', 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    body {
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4rem;
+    }
+
+    .logo {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav-links a {
+      font-size: 0.9rem;
+      text-transform: lowercase;
+    }
+
+    .portrait {
+      width: 200px;
+      height: 200px;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+      border-radius: 50%;
+    }
+
+    .portrait img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: grayscale(100%) brightness(0.9);
+      transition: filter 0.4s ease;
+    }
+
+    .portrait:hover img {
+      filter: grayscale(0%) brightness(1);
+    }
+
+    .intro {
+      margin-bottom: 3rem;
+      max-width: 600px;
+    }
+
+    .intro h1 {
+      font-size: 1.5rem;
+      font-weight: 400;
+      text-transform: lowercase;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .intro .descriptor {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .work-list {
+      margin-bottom: 4rem;
+    }
+
+    .work-list h2 {
+      font-size: 0.8rem;
+      text-transform: lowercase;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      font-weight: 400;
+    }
+
+    .work-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      max-width: 500px;
+    }
+
+    .work-item:first-child {
+      border-top: 1px solid var(--border);
+    }
+
+    .work-item .title {
+      text-transform: lowercase;
+    }
+
+    .work-item .meta {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .scatter-zone {
+      position: relative;
+      width: 100%;
+      height: 400px;
+      margin-bottom: 4rem;
+    }
+
+    .scatter-img {
+      position: absolute;
+      border: 0.5px solid var(--border);
+      overflow: hidden;
+    }
+
+    .scatter-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: grayscale(100%);
+      transition: filter 0.4s ease, transform 0.4s ease;
+    }
+
+    .scatter-img:hover img {
+      filter: grayscale(0%);
+      transform: scale(1.05);
+    }
+
+    .s1 { left: 5%; top: 10%; width: 180px; height: 240px; }
+    .s2 { left: 25%; top: 5%; width: 220px; height: 180px; }
+    .s3 { left: 55%; top: 15%; width: 160px; height: 200px; }
+    .s4 { left: 75%; top: 8%; width: 140px; height: 180px; }
+    .s5 { left: 15%; top: 55%; width: 200px; height: 150px; }
+    .s6 { left: 45%; top: 50%; width: 180px; height: 220px; }
+
+    .about-trigger {
+      cursor: pointer;
+      display: inline-block;
+      margin-bottom: 2rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .about-trigger:hover {
+      text-decoration: underline;
+    }
+
+    .about-block {
+      display: none;
+      background: var(--diary-bg);
+      color: var(--diary-text);
+      padding: 2rem;
+      max-width: 600px;
+      margin-bottom: 3rem;
+      position: relative;
+    }
+
+    .about-block::before {
+      content: '▼';
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      color: var(--diary-bg);
+      font-size: 12px;
+    }
+
+    .about-block.open {
+      display: block;
+    }
+
+    .about-block p {
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .about-block .credentials {
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+
+    .personal-statement {
+      font-size: 1rem;
+      font-style: italic;
+      margin-bottom: 2rem;
+      max-width: 400px;
+      line-height: 1.8;
+    }
+
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+    }
+
+    footer a {
+      color: var(--text-muted);
+    }
+
+    .section-content {
+      display: none;
+    }
+
+    .section-content.active {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1.5rem;
+        padding-bottom: 4rem;
+      }
+
+      nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .nav-links {
+        gap: 1.5rem;
+      }
+
+      .scatter-zone {
+        height: 300px;
+      }
+
+      .s1, .s2, .s3, .s4, .s5, .s6 {
+        transform: scale(0.6);
+      }
+
+      .s1 { left: -5%; top: 0; }
+      .s2 { left: 20%; top: -5%; }
+      .s3 { left: 50%; top: 5%; }
+      .s4 { left: 70%; top: 0; }
+      .s5 { left: 5%; top: 45%; }
+      .s6 { left: 40%; top: 40%; }
+
+      .work-item {
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="#" class="logo" onclick="showSection('home'); return false;">[jk]</a>
+    <div class="nav-links">
+      <a href="#" onclick="showSection('work'); return false;">work</a>
+      <a href="#" onclick="showSection('quiet'); return false;">quiet</a>
+      <a href="#" onclick="showSection('diary'); return false;">diary</a>
+      <a href="#" onclick="showSection('contact'); return false;">contact</a>
+    </div>
+  </nav>
+
+  <!-- HOME SECTION -->
+  <section id="home" class="section-content active">
+    <div class="portrait">
+      <img src="https://images.squarespace-cdn.com/content/v1/51ed8c60e4b01f37062677b6/1509209177958-D6AIA6SPJVUBS7WVLPST/VH_JK_PB_0352+copy+circle+opacity+copy+2000.png" alt="portrait">
+    </div>
+
+    <div class="intro">
+      <h1>jonathan kawchuk</h1>
+      <p class="descriptor">composer + field recordist + quiet parks</p>
+    </div>
+
+    <span class="about-trigger" onclick="toggleAbout()">+ about</span>
+
+    <div class="about-block" id="about-block">
+      <p>The natural world is perfect. I go to great lengths to reflect that in my work.</p>
+      <p>I make sound pieces, field recordings, and film scores. My work has taken me from the Canadian Arctic to the Phi Centre in Montreal, from National Geographic documentaries to quiet parks advocacy.</p>
+      <p>I believe in the radical importance of silence — real silence, the kind found in wilderness. I co-founded Quiet Parks International to protect it.</p>
+      <div class="credentials">
+        Emmy-winning (PBS NOVA) · 2x CASMA Winner · Grammy Voting Member · Quiet Parks International
+      </div>
+    </div>
+
+    <div class="work-list">
+      <h2>work</h2>
+      <div class="work-item">
+        <a href="#" class="title">everywhen</a>
+        <span class="meta">installation — phi centre, imax</span>
+      </div>
+      <div class="work-item">
+        <a href="#" class="title">north</a>
+        <span class="meta">project</span>
+      </div>
+      <div class="work-item">
+        <a href="#" class="title">installation</a>
+        <span class="meta">select installations</span>
+      </div>
+      <div class="work-item">
+        <a href="#" class="title">film</a>
+        <span class="meta">composition + score</span>
+      </div>
+    </div>
+
+    <div class="scatter-zone" style="position: absolute; right: 5%; top: 280px; width: 400px; height: 400px;">
+      <div class="scatter-img" style="left: 5%; top: 10%; width: 140px; height: 180px; opacity: 0.5;">
+        <img src="images/maiella-sphere-1775105117221.png" alt="Maiella 1">
+      </div>
+      <div class="scatter-img" style="left: 40%; top: 5%; width: 150px; height: 120px; opacity: 0.5;">
+        <img src="images/maiella-sphere-1775105172314.png" alt="Maiella 2">
+      </div>
+      <div class="scatter-img" style="left: 70%; top: 30%; width: 120px; height: 160px; opacity: 0.5;">
+        <img src="images/maiella-sphere-1775105256404.png" alt="Maiella 3">
+      </div>
+      <div class="scatter-img" style="left: 20%; top: 50%; width: 130px; height: 150px; opacity: 0.5;">
+        <img src="images/maiella-sphere-1775105302801.png" alt="Maiella 4">
+      </div>
+      <div class="scatter-img" style="left: 55%; top: 60%; width: 140px; height: 110px; opacity: 0.5;">
+        <img src="images/maiella-sphere-1775105312597.png" alt="Maiella 5">
+      </div>
+    </div>
+  </section>
+
+  <!-- WORK SECTION -->
+  <section id="work" class="section-content">
+    <h1 style="font-size: 1.5rem; font-weight: 400; text-transform: lowercase; margin-bottom: 2rem;">work</h1>
+
+    <div class="work-list">
+      <div class="work-item">
+        <a href="#" class="title">everywhen</a>
+        <span class="meta">installation — phi centre, imax</span>
+      </div>
+      <div class="work-item">
+        <a href="#" class="title">north</a>
+        <span class="meta">project</span>
+      </div>
+      <div class="work-item">
+        <a href="#" class="title">installation</a>
+        <span class="meta">select installations — i-thou, everywhen, etc.</span>
+      </div>
+      <div class="work-item">
+        <a href="#" class="title">hunt for the oldest dna</a>
+        <span class="meta">score — national geographic</span>
+      </div>
+      <div class="work-item">
+        <a href="#" class="title">film</a>
+        <span class="meta">composition + score</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIET SECTION -->
+  <section id="quiet" class="section-content">
+    <h1 style="font-size: 1.5rem; font-weight: 400; text-transform: lowercase; margin-bottom: 2rem;">quiet</h1>
+
+    <div class="personal-statement">
+      The natural world is perfect.<br>
+      I go to great lengths to reflect that in my work.
+    </div>
+
+    <div class="work-list">
+      <div class="work-item">
+        <a href="https://thenarwhal.ca/" target="_blank" class="title">protecting the quiet</a>
+        <span class="meta">the narwhal — 2024</span>
+      </div>
+      <div class="work-item">
+        <a href="#" class="title">field recording</a>
+        <span class="meta">travel, landscape, the spaces between</span>
+      </div>
+      <div class="work-item">
+        <a href="https://quietparks.org/" target="_blank" class="title">quiet parks international</a>
+        <span class="meta">advocacy for acoustic ecology</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIARY SECTION -->
+  <section id="diary" class="section-content">
+    <h1 style="font-size: 1.5rem; font-weight: 400; text-transform: lowercase; margin-bottom: 2rem;">diary</h1>
+
+    <div class="about-block" style="display: block; margin-bottom: 1.5rem;">
+      <p>some thoughts on silence, place, and the spaces between.</p>
+    </div>
+
+    <div class="about-block" style="display: block; margin-bottom: 1.5rem;">
+      <p>the recorder captures what words cannot. i've been thinking about this a lot lately — how a field recording is both a document and an experience.</p>
+    </div>
+
+    <div class="about-block" style="display: block;">
+      <p>quiet is not the absence of sound. it is the presence of intention.</p>
+    </div>
+  </section>
+
+  <!-- CONTACT SECTION -->
+  <section id="contact" class="section-content">
+    <h1 style="font-size: 1.5rem; font-weight: 400; text-transform: lowercase; margin-bottom: 2rem;">contact</h1>
+
+    <div class="personal-statement">
+      The natural world is perfect.<br>
+      I go to great lengths to reflect that in my work.
+    </div>
+
+    <div style="margin-bottom: 2rem;">
+      <p style="margin-bottom: 0.5rem;"><span style="color: var(--text-muted);">creative inquiries</span></p>
+      <p><a href="mailto:seth@evolutionmusic.com">seth @ evolution</a> — film composition</p>
+    </div>
+
+    <div style="margin-bottom: 2rem;">
+      <p style="margin-bottom: 0.5rem;"><span style="color: var(--text-muted);">conservation</span></p>
+      <p><a href="mailto:jon@quietparks.org">jon @ quiet parks</a> — quiet parks international</p>
+    </div>
+
+    <div>
+      <p style="margin-bottom: 0.5rem;"><span style="color: var(--text-muted);">elsewhere</span></p>
+      <p><a href="https://www.instagram.com/" target="_blank">instagram</a> · <a href="https://bandcamp.com/" target="_blank">bandcamp</a> · <a href="https://soundcloud.com/" target="_blank">soundcloud</a></p>
+    </div>
+  </section>
+
+  <footer>
+    <div id="timestamp"></div>
+    <div>[jk]</div>
+  </footer>
+
+  <script>
+    function updateTime() {
+      const now = new Date();
+      const time = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+      document.getElementById('timestamp').textContent = time;
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    function toggleAbout() {
+      const block = document.getElementById('about-block');
+      block.classList.toggle('open');
+      const trigger = document.querySelector('.about-trigger');
+      trigger.textContent = block.classList.contains('open') ? '− about' : '+ about';
+    }
+
+    function showSection(id) {
+      document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      window.scrollTo(0, 0);
+    }
+  </script>
+
+</body>
+</html>

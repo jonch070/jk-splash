@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jonathan Kawchuk</title>
+  <style>
+    /* ─── Tokens ─────────────────────────────────────────────── */
+    :root {
+      --bg:         #0e0d0b;
+      --bg-2:       #141310;
+      --text:       #e4dfd5;
+      --text-dim:   #8a8479;
+      --accent:     #c8b89a;
+      --rule:       #2a2824;
+      --mono:       'Courier New', Courier, monospace;
+      --serif:      Georgia, 'Times New Roman', serif;
+      --sans:       system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+    }
+
+    /* ─── Reset ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── Grain overlay ──────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.35;
+    }
+
+    /* ─── Nav ────────────────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.4rem 2.5rem;
+      border-bottom: 1px solid var(--rule);
+      background-color: rgba(14, 13, 11, 0.88);
+      backdrop-filter: blur(12px);
+    }
+
+    nav .wordmark {
+      font-family: var(--serif);
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      text-decoration: none;
+      opacity: 0.85;
+      transition: opacity 0.2s;
+    }
+    nav .wordmark:hover { opacity: 1; }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 2.2rem;
+    }
+
+    nav ul a {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    nav ul a:hover { color: var(--text); }
+
+    /* ─── Layout helpers ─────────────────────────────────────── */
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 2.5rem;
+    }
+
+    section { padding: 6rem 0; }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--rule);
+    }
+
+    hr.rule {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 0;
+    }
+
+    /* ─── Hero ───────────────────────────────────────────────── */
+    #hero {
+      padding: 7rem 0 5rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 4rem;
+      align-items: end;
+    }
+
+    .hero-left h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.8rem, 6vw, 5.2rem);
+      font-weight: 400;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 1.6rem;
+    }
+
+    .hero-left h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-tagline {
+      font-size: 1rem;
+      color: var(--text-dim);
+      max-width: 480px;
+      line-height: 1.7;
+    }
+
+    .hero-tagline a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(200, 184, 154, 0.3);
+      transition: border-color 0.2s;
+    }
+    .hero-tagline a:hover { border-color: var(--accent); }
+
+    .hero-right {
+      flex-shrink: 0;
+    }
+
+    .hero-portrait {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2a2620 0%, #1a1814 50%, #23211d 100%);
+      border: 1px solid var(--rule);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    /* ─── Interactive bio (ped.ro-inspired) ─────────────────── */
+    #about-inline {
+      padding: 5rem 0;
+    }
+
+    .bio-text {
+      font-size: clamp(1.05rem, 2vw, 1.35rem);
+      line-height: 1.75;
+      max-width: 720px;
+      color: var(--text);
+    }
+
+    .bio-text .reveal-word {
+      position: relative;
+      display: inline-block;
+      cursor: default;
+      border-bottom: 1px dashed rgba(200, 184, 154, 0.4);
+      color: var(--accent);
+      transition: color 0.15s;
+    }
+
+    .bio-text .reveal-word:hover { color: var(--text); }
+
+    .bio-text .reveal-word .tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-2);
+      border: 1px solid var(--rule);
+      padding: 0.55rem 0.85rem;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-family: var(--mono);
+      color: var(--text-dim);
+      white-space: nowrap;
+      z-index: 200;
+      letter-spacing: 0.03em;
+      pointer-events: none;
+    }
+
+    .bio-text .reveal-word .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--rule);
+    }
+
+    .bio-text .reveal-word:hover .tooltip { display: block; }
+
+    /* ─── Work grid ──────────────────────────────────────────── */
+    #work { padding: 5rem 0; }
+
+    .work-filters {
+      display: flex;
+      gap: 0.6rem;
+      margin-bottom: 3rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      background: transparent;
+      border: 1px solid var(--rule);
+      padding: 0.35rem 0.9rem;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      color: var(--text);
+      border-color: var(--accent);
+      background: rgba(200, 184, 154, 0.06);
+    }
+
+    .work-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .work-item {
+      position: relative;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      group: true;
+    }
+
+    .work-thumb {
+      width: 100%;
+      aspect-ratio: 16/10;
+      background: var(--bg-2);
+      border: 1px solid var(--rule);
+      overflow: hidden;
+      border-radius: 2px;
+      position: relative;
+      transition: border-color 0.25s;
+    }
+
+    .work-item:hover .work-thumb {
+      border-color: rgba(200, 184, 154, 0.35);
+    }
+
+    /* Placeholder gradient backgrounds for each project */
+    .work-thumb.t-everywhen   { background: linear-gradient(160deg, #1a2435 0%, #0d1018 100%); }
+    .work-thumb.t-north       { background: linear-gradient(160deg, #1e2b20 0%, #0d120e 100%); }
+    .work-thumb.t-installation { background: linear-gradient(160deg, #2a1f1a 0%, #100c0a 100%); }
+    .work-thumb.t-field       { background: linear-gradient(160deg, #1c2228 0%, #0d1115 100%); }
+    .work-thumb.t-dna         { background: linear-gradient(160deg, #22201a 0%, #0e0d0a 100%); }
+    .work-thumb.t-film        { background: linear-gradient(160deg, #1f1c26 0%, #0d0b12 100%); }
+
+    .work-thumb-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.2;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      transition: opacity 0.25s;
+    }
+
+    .work-item:hover .work-thumb-inner { opacity: 0.5; }
+
+    .work-meta {
+      padding: 0.85rem 0 0;
+    }
+
+    .work-title {
+      font-family: var(--serif);
+      font-size: 1.05rem;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+      text-decoration: none;
+    }
+
+    .work-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .tag + .tag::before {
+      content: '·';
+      margin-right: 0.5rem;
+    }
+
+    .work-item:hover .work-title { color: var(--accent); }
+
+    /* ─── Listening / player strip ───────────────────────────── */
+    #listening {
+      padding: 4rem 0;
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      background: var(--bg-2);
+    }
+
+    .listening-inner {
+      display: flex;
+      align-items: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+    }
+
+    .listening-label {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .platform-links {
+      display: flex;
+      gap: 1.8rem;
+      flex-wrap: wrap;
+    }
+
+    .platform-link {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .platform-link:hover { color: var(--accent); }
+
+    .platform-link::before {
+      content: '→';
+      font-size: 0.65rem;
+      opacity: 0.5;
+    }
+
+    /* ─── Long-form About ────────────────────────────────────── */
+    #about {
+      padding: 6rem 0;
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 5rem;
+    }
+
+    .about-nav {
+      position: sticky;
+      top: 6rem;
+      height: fit-content;
+    }
+
+    .about-nav ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .about-nav a {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .about-nav a:hover { color: var(--text); }
+
+    .about-body h3 {
+      font-family: var(--serif);
+      font-size: 1.5rem;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 1.2rem;
+    }
+
+    .about-body p {
+      color: var(--text-dim);
+      line-height: 1.8;
+      margin-bottom: 1.4rem;
+      font-size: 0.95rem;
+    }
+
+    .about-body p strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .about-body .press-item {
+      border-left: 2px solid var(--rule);
+      padding-left: 1.2rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .about-body .press-item a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.88rem;
+    }
+
+    .about-body .press-item .press-source {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-top: 0.3rem;
+    }
+
+    /* ─── Contact / Footer ───────────────────────────────────── */
+    footer {
+      padding: 4rem 0;
+      border-top: 1px solid var(--rule);
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 2rem;
+    }
+
+    .footer-left .footer-name {
+      font-family: var(--serif);
+      font-size: 1.8rem;
+      font-weight: 400;
+      color: var(--text);
+      opacity: 0.4;
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-left p {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+    }
+
+    .footer-left a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1rem;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 1.6rem;
+    }
+
+    .social-links a {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .social-links a:hover { color: var(--text); }
+
+    .footer-copy {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      color: var(--rule);
+      margin-top: 0.2rem;
+    }
+
+    /* ─── Selected Press quote ───────────────────────────────── */
+    .pull-quote {
+      margin: 3rem 0;
+      padding: 2rem 2.5rem;
+      border-left: 2px solid var(--accent);
+      background: rgba(200, 184, 154, 0.03);
+    }
+
+    .pull-quote blockquote {
+      font-family: var(--serif);
+      font-size: 1.15rem;
+      font-style: italic;
+      color: var(--text);
+      line-height: 1.65;
+      margin-bottom: 0.8rem;
+    }
+
+    .pull-quote cite {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-style: normal;
+    }
+
+    /* ─── Divider glyph ──────────────────────────────────────── */
+    .glyph-divider {
+      text-align: center;
+      padding: 2rem 0;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.4em;
+      color: var(--rule);
+    }
+
+    /* ─── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      nav { padding: 1.2rem 1.5rem; }
+      nav ul { gap: 1.2rem; }
+
+      .container { padding: 0 1.5rem; }
+
+      #hero {
+        grid-template-columns: 1fr;
+        padding: 4rem 0 3rem;
+      }
+
+      .hero-right { display: none; }
+
+      #about {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .about-nav { position: static; }
+      .about-nav ul { flex-direction: row; flex-wrap: wrap; }
+
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+      .footer-right { align-items: flex-start; }
+
+      .work-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 480px) {
+      .work-grid { grid-template-columns: 1fr; }
+      nav ul li:not(:first-child):not(:last-child) { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Navigation ──────────────────────────────────────── -->
+  <nav>
+    <a class="wordmark" href="#">jonathan kawchuk</a>
+    <ul>
+      <li><a href="#work">work</a></li>
+      <li><a href="#about">about</a></li>
+      <li><a href="#contact">contact</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+
+    <!-- ── Hero ────────────────────────────────────────────── -->
+    <div id="hero">
+      <div class="hero-left">
+        <h1>Sound <em>in</em><br>place &amp;<br>on screen.</h1>
+        <p class="hero-tagline">
+          Composer, sound artist, and field recordist.<br>
+          Original works, installations, and scores — from the boreal to the cinema.
+        </p>
+      </div>
+      <div class="hero-right">
+        <div class="hero-portrait">
+          portrait
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="rule" />
+
+  <!-- ── Bio — ped.ro-style inline reveals ───────────────── -->
+  <div class="container">
+    <section id="about-inline">
+      <p class="bio-text">
+        I make
+        <span class="reveal-word">sound pieces
+          <span class="tooltip">installation &amp; concert works</span>
+        </span>
+        and
+        <span class="reveal-word">scores for screen
+          <span class="tooltip">documentary &amp; narrative film</span>
+        </span>,
+        and I spend a lot of time in places worth
+        <span class="reveal-word">listening to
+          <span class="tooltip">field recording for The Narwhal, NatGeo, and others</span>
+        </span>.
+        Much of the work lives at the edge of composition and environment —
+        where a
+        <span class="reveal-word">landscape
+          <span class="tooltip">boreal forest, arctic tundra, coastal inlet</span>
+        </span>
+        becomes the instrument.
+        I'm based in Canada and occasionally
+        <span class="reveal-word">collaborate
+          <span class="tooltip">with Walker Grimshaw, among others</span>
+        </span>
+        on larger
+        <span class="reveal-word">screen projects
+          <span class="tooltip">Hunt for the Oldest DNA — National Geographic, 2024</span>
+        </span>.
+      </p>
+    </section>
+  </div>
+
+  <hr class="rule" />
+
+  <!-- ── Work Grid ────────────────────────────────────────── -->
+  <div class="container">
+    <section id="work">
+
+      <div class="section-label">Selected Work</div>
+
+      <div class="work-filters">
+        <button class="filter-btn active">All</button>
+        <button class="filter-btn">Sound &amp; Installation</button>
+        <button class="filter-btn">Field Recording</button>
+        <button class="filter-btn">Film &amp; Screen</button>
+      </div>
+
+      <div class="work-grid">
+
+        <a class="work-item" href="#" data-cat="sound">
+          <div class="work-thumb t-everywhen">
+            <div class="work-thumb-inner">Everywhen</div>
+          </div>
+          <div class="work-meta">
+            <div class="work-title">Everywhen</div>
+            <div class="work-tags">
+              <span class="tag">Sound</span>
+              <span class="tag">Installation</span>
+            </div>
+          </div>
+        </a>
+
+        <a class="work-item" href="#" data-cat="sound">
+          <div class="work-thumb t-north">
+            <div class="work-thumb-inner">North</div>
+          </div>
+          <div class="work-meta">
+            <div class="work-title">North</div>
+            <div class="work-tags">
+              <span class="tag">Sound</span>
+              <span class="tag">Composition</span>
+            </div>
+          </div>
+        </a>
+
+        <a class="work-item" href="#" data-cat="sound">
+          <div class="work-thumb t-installation">
+            <div class="work-thumb-inner">Installation</div>
+          </div>
+          <div class="work-meta">
+            <div class="work-title">Installation</div>
+            <div class="work-tags">
+              <span class="tag">Sound</span>
+              <span class="tag">Spatial</span>
+            </div>
+          </div>
+        </a>
+
+        <a class="work-item" href="https://thenarwhal.ca/protecting-quiet-spaces-natural-sounds/" target="_blank" data-cat="field">
+          <div class="work-thumb t-field">
+            <div class="work-thumb-inner">Field Recording</div>
+          </div>
+          <div class="work-meta">
+            <div class="work-title">Protecting the Quiet</div>
+            <div class="work-tags">
+              <span class="tag">Field Recording</span>
+              <span class="tag">The Narwhal</span>
+            </div>
+          </div>
+        </a>
+
+        <a class="work-item" href="https://play.reelcrafter.com/COSlb0PsRdWZ8v-mTQevfw" target="_blank" data-cat="film">
+          <div class="work-thumb t-dna">
+            <div class="work-thumb-inner">Hunt for the Oldest DNA</div>
+          </div>
+          <div class="work-meta">
+            <div class="work-title">Hunt for the Oldest DNA</div>
+            <div class="work-tags">
+              <span class="tag">Film</span>
+              <span class="tag">Score</span>
+              <span class="tag">National Geographic</span>
+            </div>
+          </div>
+        </a>
+
+        <a class="work-item" href="#" data-cat="film">
+          <div class="work-thumb t-film">
+            <div class="work-thumb-inner">Film Composition</div>
+          </div>
+          <div class="work-meta">
+            <div class="work-title">Film Composition</div>
+            <div class="work-tags">
+              <span class="tag">Film</span>
+              <span class="tag">Score</span>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </section>
+  </div>
+
+  <!-- ── Streaming Strip ──────────────────────────────────── -->
+  <section id="listening">
+    <div class="container">
+      <div class="listening-inner">
+        <span class="listening-label">Listen</span>
+        <div class="platform-links">
+          <a class="platform-link" href="#">Spotify</a>
+          <a class="platform-link" href="#">Apple Music</a>
+          <a class="platform-link" href="#">Bandcamp</a>
+          <a class="platform-link" href="#">SoundCloud</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── About / Bio ──────────────────────────────────────── -->
+  <div class="container">
+    <section id="about">
+
+      <aside class="about-nav">
+        <ul>
+          <li><a href="#about">About</a></li>
+          <li><a href="#press">Press</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </aside>
+
+      <div class="about-body">
+
+        <div class="section-label">About</div>
+
+        <h3>Jonathan Kawchuk</h3>
+
+        <p>
+          <strong>Jonathan Kawchuk</strong> is a Canadian composer, sound artist, and field recordist
+          whose work sits at the intersection of ecological listening, spatial sound, and screen narrative.
+        </p>
+
+        <p>
+          His sound installations and concert works explore the textures of place — drawing on
+          extended recordings made in remote and transitional environments across Canada.
+          His field recording practice has informed works for
+          <strong>The Narwhal</strong>, <strong>National Geographic</strong>, and other documentary contexts.
+        </p>
+
+        <p>
+          On screen, Jonathan has composed original scores for documentary and narrative film,
+          most recently contributing to <em>Hunt for the Oldest DNA</em> (2024) in collaboration with
+          composer Walker Grimshaw.
+        </p>
+
+        <div class="pull-quote">
+          <blockquote>
+            "...a compositional practice that takes the landscape itself as a kind of score."
+          </blockquote>
+          <cite>— placeholder, The Narwhal</cite>
+        </div>
+
+        <div class="section-label" id="press">Press &amp; Links</div>
+
+        <div class="press-item">
+          <a href="https://thenarwhal.ca/protecting-quiet-spaces-natural-sounds/" target="_blank">
+            Protecting Quiet Spaces: The Fight to Preserve Natural Sounds
+          </a>
+          <div class="press-source">The Narwhal · Field Recording</div>
+        </div>
+
+        <div class="press-item">
+          <a href="https://play.reelcrafter.com/COSlb0PsRdWZ8v-mTQevfw" target="_blank">
+            Hunt for the Oldest DNA — Original Score
+          </a>
+          <div class="press-source">National Geographic · Film Score · 2024</div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <hr class="rule" />
+
+  <!-- ── Footer / Contact ─────────────────────────────────── -->
+  <footer id="contact">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-left">
+          <div class="footer-name">Jonathan Kawchuk</div>
+          <p>
+            For commissions, sync licensing, and collaborations:<br>
+            <a href="mailto:hello@jonathankawchuk.com">hello@jonathankawchuk.com</a>
+          </p>
+        </div>
+        <div class="footer-right">
+          <div class="social-links">
+            <a href="#">Instagram</a>
+            <a href="#">Bandcamp</a>
+            <a href="http://www.facebook.com/jonathankawchuk">Facebook</a>
+          </div>
+          <div class="footer-copy">© 2026 Jonathan Kawchuk</div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ── JS: filter toggle ─────────────────────────────────── -->
+  <script>
+    // Filter buttons
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const workItems  = document.querySelectorAll('.work-item');
+
+    const catMap = {
+      'All':                    null,
+      'Sound & Installation':   'sound',
+      'Field Recording':        'field',
+      'Film & Screen':          'film',
+    };
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cat = catMap[btn.textContent.trim()];
+        workItems.forEach(item => {
+          if (!cat || item.dataset.cat === cat) {
+            item.style.display = 'block';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // Smooth active-nav highlighting
+    const sections = document.querySelectorAll('section[id], div[id]');
+    const navLinks = document.querySelectorAll('nav ul a');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(link => {
+            link.style.color = link.getAttribute('href') === '#' + entry.target.id
+              ? 'var(--text)' : '';
+          });
+        }
+      });
+    }, { threshold: 0.3 });
+    sections.forEach(s => observer.observe(s));
+  </script>
+
+</body>
+</html>

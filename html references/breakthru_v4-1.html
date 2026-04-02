@@ -1,0 +1,2289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breakthru — Build your AI partner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+/* ── DESIGN TOKENS ──────────────────────────────── */
+:root {
+  --bg:           #08080b;
+  --surface:      #0e0e12;
+  --card:         #131318;
+  --border:       #1e1e24;
+  --border-light: #282830;
+  --text:         #ece7de;
+  --text-muted:   #6a6560;
+  --text-dim:     #32302d;
+  --accent:       #c48b40;
+  --accent-dim:   rgba(196,139,64,0.09);
+  --accent-glow:  rgba(196,139,64,0.18);
+  --green:        #5aab7a;
+
+  /* artifact (light mode) */
+  --art-bg:       #f5f0e8;
+  --art-surface:  #ede7db;
+  --art-text:     #18160f;
+  --art-muted:    #8a8070;
+  --art-faint:    #c8bfac;
+  --art-border:   #d6cdb8;
+  --art-accent:   #8a5e22;
+  --art-mono:     #5a4e38;
+}
+
+/* ── RESET ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  height: 100dvh;
+}
+
+/* ── TYPOGRAPHY ─────────────────────────────────── */
+.serif        { font-family: 'Cormorant Garamond', serif; }
+.mono         { font-family: 'JetBrains Mono', monospace; }
+.eyebrow      { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); font-weight: 400; }
+.eyebrow-accent { color: var(--accent); }
+
+/* ── PHASE SYSTEM ───────────────────────────────── */
+.phase {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  overflow-y: auto;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  z-index: 1;
+}
+.phase.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+  z-index: 2;
+}
+.phase.exit {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 1;
+}
+
+/* ── ARTIFACT PHASE (light) ──────────────────────── */
+#phase-artifact {
+  background: var(--art-bg);
+  color: var(--art-text);
+  overflow: hidden;  /* inner scroll handles this */
+}
+
+
+/* ── SHARED CONTAINERS ──────────────────────────── */
+.container     { width: 100%; max-width: 640px; }
+.container-lg  { width: 100%; max-width: 860px; }
+.container-sm  { width: 100%; max-width: 480px; }
+
+/* ── BUTTONS ─────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: var(--accent);
+  color: #0a0808;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+.btn-primary:hover { background: #d49b50; transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.btn-ghost:hover { color: var(--text); }
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 28px;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── DIVIDER ─────────────────────────────────────── */
+.rule { width: 32px; height: 1px; background: var(--border-light); margin: 28px 0; }
+.rule-full { width: 100%; height: 1px; background: var(--border); margin: 28px 0; }
+
+/* ── ANIMATIONS ──────────────────────────────────── */
+@keyframes fadeUp   { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+@keyframes breathe  { 0%,100% { opacity:0.4; transform:scale(1); } 50% { opacity:1; transform:scale(1.04); } }
+@keyframes progress { from { width:0%; } to { width:100%; } }
+@keyframes shimmer  { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes tickIn   { from { opacity:0; transform:translateX(-6px); } to { opacity:1; transform:translateX(0); } }
+@keyframes revealUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+
+.animate-1 { animation: fadeUp 0.55s ease forwards; }
+.animate-2 { animation: fadeUp 0.55s 0.08s ease forwards; opacity:0; }
+.animate-3 { animation: fadeUp 0.55s 0.16s ease forwards; opacity:0; }
+.animate-4 { animation: fadeUp 0.55s 0.24s ease forwards; opacity:0; }
+.animate-5 { animation: fadeUp 0.55s 0.32s ease forwards; opacity:0; }
+.animate-6 { animation: fadeUp 0.55s 0.40s ease forwards; opacity:0; }
+
+/* ─────────────────────────────────────────────────
+   PHASE 0: LANDING
+───────────────────────────────────────────────── */
+.landing-mark {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  position: fixed;
+  top: 32px;
+  left: 40px;
+}
+.landing-headline {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(42px, 6vw, 72px);
+  font-weight: 300;
+  line-height: 1.08;
+  color: var(--text);
+  margin-bottom: 28px;
+}
+.landing-headline em {
+  font-style: italic;
+  color: var(--accent);
+}
+.landing-sub {
+  font-size: 16px;
+  font-weight: 300;
+  color: var(--text-muted);
+  line-height: 1.65;
+  max-width: 480px;
+  margin-bottom: 40px;
+}
+.landing-support {
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+
+/* ─────────────────────────────────────────────────
+   PHASE 1: FIT
+───────────────────────────────────────────────── */
+.fit-header {
+  margin-bottom: 36px;
+}
+.fit-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 400;
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+.fit-sub {
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.fit-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 40px;
+  margin-bottom: 36px;
+}
+@media (max-width: 600px) {
+  .fit-columns { grid-template-columns: 1fr; }
+}
+.fit-col-label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.fit-col-label.yes { color: var(--green); }
+.fit-col-label.no  { color: var(--text-dim); }
+.fit-list { list-style: none; }
+.fit-list li {
+  font-size: 14px;
+  color: var(--text-muted);
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.5;
+}
+.fit-list li .dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+.fit-list.yes li .dot { background: var(--green); opacity: 0.7; }
+
+.fit-name-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding-top: 8px;
+}
+.fit-name-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  padding: 13px 18px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.fit-name-input::placeholder { color: var(--text-dim); }
+.fit-name-input:focus { border-color: var(--accent); }
+.fit-name-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ─────────────────────────────────────────────────
+   PHASE 2: BUILDER
+───────────────────────────────────────────────── */
+.builder-progress {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 48px;
+}
+.builder-progress-dot {
+  width: 20px;
+  height: 2px;
+  background: var(--border-light);
+  transition: background 0.3s;
+}
+.builder-progress-dot.done { background: var(--accent); }
+.builder-progress-dot.active { background: var(--accent); opacity: 0.5; }
+
+.builder-q {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(26px, 3.5vw, 42px);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.builder-q-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  line-height: 1.55;
+}
+.builder-textarea {
+  width: 100%;
+  min-height: 120px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-bottom: 2px solid var(--accent);
+  padding: 16px 20px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 20px;
+}
+.builder-textarea::placeholder { color: var(--text-dim); }
+.builder-textarea:focus { border-color: var(--accent); border-bottom-color: var(--accent); }
+
+.builder-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.builder-counter {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ─────────────────────────────────────────────────
+   PHASE 3: GENERATING
+───────────────────────────────────────────────── */
+.generating-inner {
+  text-align: center;
+}
+.generating-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin: 0 auto 48px;
+  animation: breathe 2.4s ease-in-out infinite;
+}
+.generating-stage {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--text);
+  margin-bottom: 12px;
+  min-height: 40px;
+  transition: opacity 0.3s;
+}
+.generating-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+.generating-bar {
+  width: 160px;
+  height: 1px;
+  background: var(--border-light);
+  margin: 32px auto 0;
+  overflow: hidden;
+  position: relative;
+}
+.generating-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.6s ease;
+}
+
+/* ─────────────────────────────────────────────────
+   PHASE 4: REVEAL
+───────────────────────────────────────────────── */
+.reveal-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+.reveal-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(52px, 7vw, 88px);
+  font-weight: 300;
+  line-height: 1.0;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.reveal-role {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--text-muted);
+  margin-bottom: 40px;
+}
+.reveal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 36px;
+}
+@media (max-width: 560px) {
+  .reveal-grid { grid-template-columns: 1fr; }
+}
+.reveal-cell {
+  background: var(--surface);
+  padding: 20px 22px;
+}
+.reveal-cell-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.reveal-cell-val {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.reveal-primary {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 36px;
+  padding: 20px 22px;
+  background: var(--accent-dim);
+  border-left: 2px solid var(--accent);
+}
+
+/* ─────────────────────────────────────────────────
+   PHASE 5: ARTIFACT
+───────────────────────────────────────────────── */
+#phase-artifact {
+  background: var(--art-bg);
+  align-items: flex-start;
+  padding: 0;
+}
+.artifact-scroll {
+  width: 100%;
+  height: 100dvh;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: 60px 24px 120px;
+}
+.artifact-doc {
+  width: 100%;
+  max-width: 720px;
+  color: var(--art-text);
+  font-family: 'DM Sans', sans-serif;
+}
+.artifact-header {
+  border-bottom: 2px solid var(--art-text);
+  padding-bottom: 28px;
+  margin-bottom: 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.artifact-header-left .mark {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--art-accent);
+  margin-bottom: 10px;
+}
+.artifact-header-left .doc-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(38px, 5vw, 60px);
+  font-weight: 400;
+  line-height: 1.05;
+  color: var(--art-text);
+}
+.artifact-header-right {
+  text-align: right;
+  font-size: 12px;
+  color: var(--art-muted);
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.8;
+}
+.artifact-section {
+  margin-bottom: 44px;
+}
+.artifact-section-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--art-faint);
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+.artifact-section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--art-text);
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--art-border);
+  padding-bottom: 8px;
+}
+.artifact-body {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--art-text);
+}
+.artifact-body p { margin-bottom: 10px; }
+
+.persona-card {
+  background: var(--art-surface);
+  border: 1px solid var(--art-border);
+  padding: 28px 32px;
+  margin-bottom: 16px;
+}
+.persona-card .label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--art-muted);
+  margin-bottom: 4px;
+}
+.persona-card .value {
+  font-size: 15px;
+  color: var(--art-text);
+  line-height: 1.5;
+}
+.persona-card .persona-name-large {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 40px;
+  font-weight: 400;
+  margin-bottom: 4px;
+}
+.persona-card .persona-role {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--art-muted);
+}
+
+.tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.tag {
+  padding: 5px 12px;
+  background: var(--art-surface);
+  border: 1px solid var(--art-border);
+  font-size: 12px;
+  color: var(--art-text);
+  font-family: 'DM Sans', sans-serif;
+}
+.tag.accent {
+  background: rgba(138,94,34,0.08);
+  border-color: rgba(138,94,34,0.25);
+  color: var(--art-accent);
+}
+
+.mode-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--art-border);
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+.mode-row:first-child { border-radius: 0; }
+.mode-cell {
+  padding: 12px 14px;
+  border-right: 1px solid var(--art-border);
+  line-height: 1.5;
+}
+.mode-cell:last-child { border-right: none; }
+.mode-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--art-accent);
+  font-weight: 400;
+}
+.mode-text { color: var(--art-text); }
+@media (max-width: 600px) {
+  .mode-row { grid-template-columns: 1fr; }
+  .mode-cell { border-right: none; border-bottom: 1px solid var(--art-border); }
+  .mode-cell:last-child { border-bottom: none; }
+}
+
+.prompt-block {
+  background: #1a1612;
+  border-left: 3px solid var(--art-accent);
+  padding: 14px 18px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.prompt-block .prompt-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #c8b89a;
+  line-height: 1.6;
+  flex: 1;
+}
+.prompt-copy-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  color: #5a4e3a;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+.prompt-copy-btn:hover { color: var(--art-accent); }
+
+.system-prompt-block {
+  background: #1a1612;
+  border: 1px solid #2a2218;
+  padding: 24px;
+  margin-top: 8px;
+}
+.system-prompt-block pre {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #b8a888;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.system-prompt-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--art-accent);
+  margin-bottom: 14px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.artifact-list {
+  list-style: none;
+}
+.artifact-list li {
+  font-size: 14px;
+  color: var(--art-text);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--art-border);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  line-height: 1.55;
+}
+.artifact-list li::before {
+  content: '—';
+  color: var(--art-faint);
+  flex-shrink: 0;
+}
+.artifact-list li.accent-item::before { color: var(--art-accent); }
+
+.closing-block {
+  background: var(--art-surface);
+  border-top: 2px solid var(--art-text);
+  padding: 32px;
+  margin-top: 8px;
+}
+.closing-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--art-text);
+  line-height: 1.6;
+}
+
+.artifact-actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(245,240,232,0.92);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--art-border);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+.artifact-actions.visible {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+}
+.artifact-action-label {
+  font-size: 13px;
+  color: var(--art-muted);
+}
+.artifact-btns {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.art-btn-outline {
+  padding: 9px 20px;
+  background: transparent;
+  border: 1px solid var(--art-border);
+  color: var(--art-text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.art-btn-outline:hover { border-color: var(--art-accent); color: var(--art-accent); }
+.art-btn-solid {
+  padding: 9px 20px;
+  background: var(--art-text);
+  color: var(--art-bg);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.art-btn-solid:hover { background: #2a2018; }
+
+/* ─────────────────────────────────────────────────
+   PHASE 6: VALUE
+───────────────────────────────────────────────── */
+.value-headline {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(36px, 5vw, 60px);
+  font-weight: 300;
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+.value-sub {
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 40px;
+  max-width: 480px;
+}
+.value-lenses {
+  display: grid;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 40px;
+}
+.value-lens {
+  background: var(--surface);
+  padding: 24px 28px;
+}
+.lens-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+.lens-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 400;
+  margin-bottom: 10px;
+}
+.lens-body {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+.value-equiv-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.equiv-tag {
+  padding: 4px 11px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(196,139,64,0.2);
+  font-size: 12px;
+  color: var(--accent);
+}
+
+/* Equiv card — dark (value page) */
+.equiv-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-top: 12px;
+}
+.equiv-card {
+  background: var(--surface);
+  padding: 18px 20px;
+}
+.equiv-role {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.equiv-rate {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--accent);
+  margin-bottom: 8px;
+  line-height: 1;
+}
+.equiv-context {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+/* Equiv card — light (artifact) */
+.artifact-doc .equiv-cards-grid {
+  background: var(--art-border);
+  border-color: var(--art-border);
+}
+.artifact-doc .equiv-card {
+  background: var(--art-surface);
+}
+.artifact-doc .equiv-role {
+  color: var(--art-text);
+}
+.artifact-doc .equiv-rate {
+  color: var(--art-accent);
+}
+.artifact-doc .equiv-context {
+  color: var(--art-muted);
+}
+
+/* ─────────────────────────────────────────────────
+   PHASE 7: PRICING
+───────────────────────────────────────────────── */
+.pricing-headline {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(32px, 4.5vw, 54px);
+  font-weight: 300;
+  line-height: 1.12;
+  margin-bottom: 10px;
+}
+.pricing-sub {
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 40px;
+  max-width: 520px;
+}
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+@media (max-width: 700px) {
+  .pricing-grid { grid-template-columns: 1fr; }
+}
+.pricing-card {
+  background: var(--surface);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: background 0.2s;
+}
+.pricing-card:hover { background: var(--card); }
+.pricing-card.selected { background: var(--accent-dim); border: 1px solid rgba(196,139,64,0.3); }
+.pricing-card-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.pricing-card-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+.pricing-card-body {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  flex: 1;
+}
+.pricing-card-price {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--text);
+}
+.pricing-card-price span {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif;
+}
+.pricing-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 300;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.pricing-input::placeholder { color: var(--text-dim); }
+.pricing-input:focus { border-color: var(--accent); }
+.pricing-select-btn {
+  padding: 10px 18px;
+  background: none;
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+.pricing-select-btn:hover { border-color: var(--accent); color: var(--accent); }
+.pricing-footer-note {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  text-align: center;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.pricing-confirm {
+  text-align: center;
+  padding: 32px;
+  border: 1px solid var(--border-light);
+}
+.pricing-confirm-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 300;
+  margin-bottom: 10px;
+}
+.pricing-confirm-body {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+/* ── TOAST ────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: var(--art-text);
+  color: var(--art-bg);
+  padding: 10px 18px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ── SCROLLBAR ────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); }
+.artifact-scroll::-webkit-scrollbar-thumb { background: var(--art-faint); }
+
+/* ── BRAND MARK TRANSITION ────────────────── */
+#brand-mark { transition: opacity 0.3s; }
+
+/* ── PRINT STYLES ─────────────────────────── */
+@media print {
+  body { background: white; color: black; overflow: auto; height: auto; }
+  .phase { position: static !important; opacity: 1 !important; transform: none !important; }
+  .phase:not(#phase-artifact) { display: none !important; }
+  #phase-artifact { display: flex !important; background: white; }
+  .artifact-scroll { height: auto !important; overflow: visible !important; padding: 20px; }
+  .artifact-actions, #brand-mark, .toast { display: none !important; }
+  .system-prompt-block { background: #f5f5f5 !important; border-color: #ccc; }
+  .system-prompt-block pre { color: #333 !important; }
+  .prompt-block { background: #f0ede8 !important; }
+  .prompt-block .prompt-text { color: #3a2e20 !important; }
+  .prompt-copy-btn { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── BRAND MARK (always visible in dark phases) ── -->
+<div class="landing-mark" id="brand-mark">breakthru</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ─────────────────────────────────────────
+     PHASE 0: LANDING
+───────────────────────────────────────────── -->
+<div class="phase active" id="phase-landing">
+  <div class="container animate-1">
+    <div class="rule" style="margin-top:0; background: var(--accent); opacity:0.4;"></div>
+    <h1 class="landing-headline">
+      Build a tailored AI partner<br>for the way you <em>actually</em> work.
+    </h1>
+    <p class="landing-sub animate-2">
+      Answer five questions. Receive a custom AI operating guide built around your work, your stuck points, and your goals. Then choose what it's worth.
+    </p>
+    <div class="animate-3" style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+      <button class="btn-primary" onclick="goTo('fit')">
+        Build mine
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="landing-support">A practical experiment in solidarity pricing.</span>
+    </div>
+
+    <div class="rule-full animate-4" style="margin-top:56px;"></div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:24px;" class="animate-4">
+      <div>
+        <div class="eyebrow" style="margin-bottom:6px;">Free output</div>
+        <div style="font-size:13px; color:var(--text-muted); line-height:1.55;">A complete AI operating guide you can use immediately.</div>
+      </div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:6px;">Five minutes</div>
+        <div style="font-size:13px; color:var(--text-muted); line-height:1.55;">Lightweight build. No lengthy intake. No fluff.</div>
+      </div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:6px;">Your choice</div>
+        <div style="font-size:13px; color:var(--text-muted); line-height:1.55;">Pricing comes after. You decide what it's worth.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────
+     PHASE 1: FIT
+───────────────────────────────────────────── -->
+<div class="phase" id="phase-fit">
+  <div class="container-lg">
+    <div class="fit-header animate-1">
+      <div class="eyebrow eyebrow-accent" style="margin-bottom:14px;">Before we build</div>
+      <h2 class="fit-title">Is this right for you?</h2>
+      <p class="fit-sub">Breakthru is built for a specific kind of person. Not everyone. Just the right ones.</p>
+    </div>
+
+    <div class="fit-columns animate-2">
+      <div>
+        <div class="fit-col-label yes">Good fit</div>
+        <ul class="fit-list yes">
+          <li><span class="dot"></span>Professionals with nuanced work who've hit the ceiling of generic AI</li>
+          <li><span class="dot"></span>Navigating real decisions, not looking for generic advice</li>
+          <li><span class="dot"></span>Founders, operators, and creatives who need strategic leverage</li>
+          <li><span class="dot"></span>People who need a thinking partner, not just a chatbot</li>
+          <li><span class="dot"></span>Anyone whose work requires judgment, not just execution</li>
+        </ul>
+      </div>
+      <div>
+        <div class="fit-col-label no" style="color:var(--text-dim);">Probably not</div>
+        <ul class="fit-list">
+          <li><span class="dot"></span>Looking for a beginner's guide to AI prompting</li>
+          <li><span class="dot"></span>Want a generic chatbot without real context</li>
+          <li><span class="dot"></span>Seeking inspiration with no implementation intent</li>
+          <li><span class="dot"></span>Need regulated advice (legal, financial, medical)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="animate-3" style="margin-bottom:28px;">
+      <div class="eyebrow" style="margin-bottom:10px;">One more thing — what's your name?</div>
+      <input type="text" class="fit-name-input" id="userName" placeholder="Your name" style="max-width:320px; display:block;">
+    </div>
+
+    <div style="display:flex; align-items:center; gap:20px;" class="animate-4">
+      <button class="btn-primary" onclick="startBuilder()">
+        That's me. Let's build.
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="btn-ghost" onclick="goTo('landing')">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────
+     PHASE 2: BUILDER
+───────────────────────────────────────────── -->
+<div class="phase" id="phase-builder">
+  <div class="container-sm">
+    <div class="builder-progress" id="builderProgress"></div>
+    <div id="builderQuestion"></div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────
+     PHASE 3: GENERATING
+───────────────────────────────────────────── -->
+<div class="phase" id="phase-generating">
+  <div class="generating-inner">
+    <div class="generating-dot"></div>
+    <div class="generating-stage" id="genStage">Mapping your context...</div>
+    <div class="generating-sub">Building your operating guide</div>
+    <div class="generating-bar">
+      <div class="generating-bar-fill" id="genBar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────
+     PHASE 4: REVEAL
+───────────────────────────────────────────── -->
+<div class="phase" id="phase-reveal">
+  <div class="container" id="revealContent"></div>
+</div>
+
+<!-- ─────────────────────────────────────────
+     PHASE 5: ARTIFACT
+───────────────────────────────────────────── -->
+<div class="phase" id="phase-artifact">
+  <div class="artifact-scroll" id="artifactScroll">
+    <div class="artifact-doc" id="artifactDoc"></div>
+  </div>
+  <div class="artifact-actions">
+    <span class="artifact-action-label">Your operating guide is ready.</span>
+    <div class="artifact-btns">
+      <button class="art-btn-outline" onclick="copyArtifact()">Copy as text</button>
+      <button class="art-btn-outline" onclick="window.print()">Save as PDF</button>
+      <button class="art-btn-solid" onclick="goTo('value')">Understand the value →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────
+     PHASE 6: VALUE
+───────────────────────────────────────────── -->
+<div class="phase" id="phase-value">
+  <div class="container" id="valueContent"></div>
+</div>
+
+<!-- ─────────────────────────────────────────
+     PHASE 7: PRICING
+───────────────────────────────────────────── -->
+<div class="phase" id="phase-pricing">
+  <div class="container-lg" id="pricingContent"></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+const state = {
+  phase: 'landing',
+  builderStep: 0,
+  userName: '',
+  answers: [],
+  persona: null,
+};
+
+const questions = [
+  {
+    q: "What kind of work do you do?",
+    sub: "Describe your role, craft, or the kinds of problems you spend most of your time on.",
+    placeholder: "e.g. I run a small creative agency, consult on go-to-market strategy, write long-form content..."
+  },
+  {
+    q: "Where are you most stuck right now?",
+    sub: "What's the specific challenge, decision, or bottleneck taking up the most mental space?",
+    placeholder: "Be specific. The more honest this is, the more useful your persona will be."
+  },
+  {
+    q: "What kind of support would create the most leverage?",
+    sub: "Strategic thinking partner? Sharp editor? Research synthesizer? Decision sounding board?",
+    placeholder: "Describe the kind of mind or role that would help most."
+  },
+  {
+    q: "What have you already tried?",
+    sub: "What hasn't quite worked, and what was missing? This helps avoid building something redundant.",
+    placeholder: "Generic AI, coaches, frameworks, books, asking colleagues... what fell short and why?"
+  },
+  {
+    q: "If this works well, what looks different in 30 days?",
+    sub: "Name a concrete outcome that would make this feel genuinely worth it.",
+    placeholder: "What gets easier, clearer, or done?"
+  }
+];
+
+/* ═══════════════════════════════════════════
+   PHASE TRANSITIONS
+═══════════════════════════════════════════ */
+function goTo(phase) {
+  const current = document.querySelector('.phase.active');
+  if (current) {
+    current.classList.add('exit');
+    setTimeout(() => current.classList.remove('exit', 'active'), 350);
+  }
+  const next = document.getElementById('phase-' + phase);
+  if (!next) return;
+  setTimeout(() => {
+    next.classList.add('active');
+    state.phase = phase;
+    // toggle brand mark visibility
+    const mark = document.getElementById('brand-mark');
+    if (phase === 'artifact') {
+      mark.style.display = 'none';
+    } else {
+      mark.style.display = '';
+    }
+  }, 100);
+}
+
+/* ═══════════════════════════════════════════
+   FIT → BUILDER
+═══════════════════════════════════════════ */
+function startBuilder() {
+  const nameInput = document.getElementById('userName');
+  state.userName = nameInput.value.trim() || 'You';
+  state.builderStep = 0;
+  state.answers = [];
+  renderBuilderStep();
+  goTo('builder');
+}
+
+/* ═══════════════════════════════════════════
+   BUILDER
+═══════════════════════════════════════════ */
+function renderBuilderStep() {
+  const step = state.builderStep;
+  const q = questions[step];
+
+  // progress dots
+  const progress = document.getElementById('builderProgress');
+  progress.innerHTML = questions.map((_, i) => {
+    let cls = 'builder-progress-dot';
+    if (i < step) cls += ' done';
+    if (i === step) cls += ' active';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+
+  // question
+  const container = document.getElementById('builderQuestion');
+  container.innerHTML = `
+    <div class="animate-1">
+      <div class="eyebrow" style="margin-bottom:14px;">${step + 1} of ${questions.length}</div>
+      <h2 class="builder-q">${q.q}</h2>
+      <p class="builder-q-sub">${q.sub}</p>
+      <textarea class="builder-textarea" id="builderAnswer" placeholder="${q.placeholder}" rows="5">${state.answers[step] || ''}</textarea>
+      <div class="builder-nav">
+        <button class="btn-ghost" onclick="${step === 0 ? "goTo('fit')" : 'prevBuilderStep()'}">
+          ← ${step === 0 ? 'Back' : 'Previous'}
+        </button>
+        <div style="display:flex; align-items:center; gap:16px;">
+          <span class="builder-counter">${step + 1} / ${questions.length}</span>
+          <button class="btn-primary" onclick="nextBuilderStep()">
+            ${step === questions.length - 1 ? 'Generate my persona' : 'Continue'}
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // focus textarea
+  setTimeout(() => {
+    const ta = document.getElementById('builderAnswer');
+    if (ta) ta.focus();
+  }, 300);
+
+  // enter to advance (cmd/ctrl+enter)
+  document.getElementById('builderAnswer').addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') nextBuilderStep();
+  });
+}
+
+function nextBuilderStep() {
+  const answer = document.getElementById('builderAnswer').value.trim();
+  if (!answer) {
+    document.getElementById('builderAnswer').style.borderBottomColor = '#e05050';
+    setTimeout(() => { document.getElementById('builderAnswer').style.borderBottomColor = 'var(--accent)'; }, 1000);
+    return;
+  }
+  state.answers[state.builderStep] = answer;
+  if (state.builderStep < questions.length - 1) {
+    state.builderStep++;
+    renderBuilderStep();
+  } else {
+    runGeneration();
+  }
+}
+
+function prevBuilderStep() {
+  const answer = document.getElementById('builderAnswer').value.trim();
+  state.answers[state.builderStep] = answer;
+  state.builderStep--;
+  renderBuilderStep();
+}
+
+/* ═══════════════════════════════════════════
+   GENERATION STAGES
+═══════════════════════════════════════════ */
+const genStages = [
+  "Mapping your context...",
+  "Identifying leverage points...",
+  "Shaping behavioral architecture...",
+  "Composing your guide...",
+  "Finalizing your persona..."
+];
+
+async function runGeneration() {
+  goTo('generating');
+  let stageIdx = 0;
+  const stageEl = document.getElementById('genStage');
+  const barEl   = document.getElementById('genBar');
+
+  const stageInterval = setInterval(() => {
+    stageIdx = Math.min(stageIdx + 1, genStages.length - 1);
+    stageEl.style.opacity = '0';
+    setTimeout(() => {
+      stageEl.textContent = genStages[stageIdx];
+      stageEl.style.opacity = '1';
+    }, 200);
+    barEl.style.width = `${(stageIdx / (genStages.length - 1)) * 85}%`;
+  }, 900);
+
+  // Minimum display time: gives the generation screen weight
+  const minWait = 3800;
+  const t0 = Date.now();
+
+  // Run client-side — synchronous but we yield so the UI renders
+  await new Promise(r => setTimeout(r, 0));
+  state.persona = buildPersonaClientSide(state.answers, state.userName);
+
+  const elapsed = Date.now() - t0;
+  if (elapsed < minWait) await new Promise(r => setTimeout(r, minWait - elapsed));
+
+  clearInterval(stageInterval);
+  barEl.style.width = '100%';
+  await new Promise(r => setTimeout(r, 400));
+
+  renderReveal();
+  goTo('reveal');
+}
+
+/* ═══════════════════════════════════════════
+   CLIENT-SIDE PERSONA ENGINE
+═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   BREAKTHRU CLIENT-SIDE PERSONA ENGINE
+   Zero API calls. Reads actual answer text for specificity.
+═══════════════════════════════════════════════════════════ */
+
+/* ── SIGNAL EXTRACTION ─────────────────────────────────── */
+
+function extractSignals(answers) {
+  const [work, stuck, support, tried, vision] = answers.map(a => a.toLowerCase());
+  const all = answers.join(' ').toLowerCase();
+
+  // Work domain detection
+  const domains = {
+    creative:   /\b(design|creative|brand|art|visual|content|copy|writ|film|photo|music|podcast|media|editorial|story|narrative)\b/,
+    strategic:  /\b(strateg|consult|advisory|founder|startup|business|growth|go.to.market|gtm|product|launch|venture|investor)\b/,
+    operational:/\b(operat|process|system|team|manage|hire|scale|workflow|project|deliver|execut|logistic|supply)\b/,
+    coaching:   /\b(coach|facilitat|train|teach|mentor|speak|workshop|course|community|client|student|audience)\b/,
+    technical:  /\b(engineer|develop|code|software|data|tech|build|product|saas|app|platform|api|ML|AI)\b/,
+    finance:    /\b(financ|invest|fund|revenue|pricing|monetiz|budget|accounting|tax|capital)\b/,
+    sales:      /\b(sales|sell|pitch|prospect|lead|close|revenue|deal|client|customer|CRM|pipeline)\b/,
+    research:   /\b(research|analys|report|insight|survey|data|academic|publish|study|evidence)\b/,
+  };
+
+  // Stuck-point detection
+  const stuckTypes = {
+    decision:   /\b(decid|choice|option|path|direction|which|should i|between|stuck on|can't choose)\b/,
+    clarity:    /\b(clear|focus|priorit|overwhelm|too many|scattered|vague|don't know what|unclear|confused)\b/,
+    momentum:   /\b(stuck|stall|moving|progress|start|begin|procrastinat|block|can't seem|hard to)\b/,
+    positioning:/\b(position|messag|communicat|how to explain|how to talk|people don't understand|brand|articulate)\b/,
+    confidence: /\b(confident|doubt|fear|imposter|worthy|should i|deserve|qualified|ready)\b/,
+    client:     /\b(client|customer|relationship|difficult|retain|churn|feedback|expectation|boundary)\b/,
+    scale:      /\b(scale|grow|hire|delegate|system|process|too much|capacity|bandwidth|handoff)\b/,
+    pricing:    /\b(pric|charge|rate|worth|value|how much|undercharge|raise|fee)\b/,
+  };
+
+  // Support type detection
+  const supportTypes = {
+    thinking:   /\b(think|sounding board|thought partner|discuss|talk through|reason|logic|perspective)\b/,
+    editing:    /\b(edit|review|refine|polish|improve|writing|draft|copy|feedback on|look at)\b/,
+    research:   /\b(research|find|gather|synthesize|look up|analyze|compare|deep dive|information)\b/,
+    structure:  /\b(structur|organiz|framework|system|plan|roadmap|break down|outline|process)\b/,
+    accountability:/\b(accountab|follow.through|commit|check in|consistent|habit|discipline|keep me)\b/,
+    challenge:  /\b(challeng|push back|honest|critical|devil.s advocate|tell me when i.m wrong|disagree)\b/,
+  };
+
+  function detect(text, map) {
+    return Object.entries(map)
+      .filter(([, rx]) => rx.test(text))
+      .map(([k]) => k);
+  }
+
+  return {
+    workDomains:  detect(work, domains),
+    stuckTypes:   detect(stuck, stuckTypes),
+    supportTypes: detect(support, supportTypes),
+    // Pull meaningful nouns from work answer (first 3 distinct non-stopwords)
+    workNouns:    extractNouns(answers[0]),
+    stuckNouns:   extractNouns(answers[1]),
+    visionNouns:  extractNouns(answers[4]),
+    // Raw snippets for weaving into copy
+    workSnippet:  answers[0].slice(0, 80).trim(),
+    stuckSnippet: answers[1].slice(0, 100).trim(),
+    visionSnippet:answers[4].slice(0, 80).trim(),
+    triedSnippet: answers[3].slice(0, 80).trim(),
+  };
+}
+
+function extractNouns(text) {
+  const stop = new Set(['i','a','an','the','and','or','but','in','on','at','to','for','of','with','my','me','we','our','is','are','was','were','be','been','have','has','had','do','does','did','this','that','it','its','they','their','when','how','what','who','where','which','so','as','if','not','no','can','could','would','should','will','get','got','just','like','really','very','more','most','some','any','all','been','also','from','about','into','through','during','before','after','above','below','up','down','out','off','over','under','again','then','once','here','there','both','few','more','most','other','same','such','own','only','too','than','each','much','now','new','first','last','long','great','little','own','right','old','big','high','low','next','early','young','important','public','private','real','best','free','still','never','always','every','also','well','even','back','good','need','want','work','make','take','go','come','know','think','see','use','find','give','tell','put','say','help','try','keep','let','feel','seem','become','run','call','move','live','hold','show','way','time','year','day','people','place','world','man','woman','person','while','thing','fact','case','part','hand','eye','face','head','after','two','three','four','five','six','seven','eight','nine','ten']);
+  return text
+    .replace(/[^a-zA-Z\s-]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 3 && !stop.has(w.toLowerCase()))
+    .slice(0, 4)
+    .map(w => w.toLowerCase());
+}
+
+/* ── PERSONA ARCHETYPES ────────────────────────────────── */
+
+const ARCHETYPES = {
+  // name, tagline, coreRole, workingStyle
+  signal_editor: {
+    name: "The Signal Editor",
+    tagline: "Cuts noise. Surfaces what matters.",
+    coreRole: "A sharp synthesis partner that separates what's essential from what's distracting.",
+    workingStyle: "Concise and direct. Asks one clarifying question before synthesizing. Prioritizes the highest-leverage insight over comprehensive coverage. Won't bury the lead.",
+  },
+  decision_architect: {
+    name: "The Decision Architect",
+    tagline: "Maps tradeoffs. Makes choices legible.",
+    coreRole: "A structured thinking partner that converts ambiguous choices into clear, reasoned decisions.",
+    workingStyle: "Methodical and honest about tradeoffs. Maps options side-by-side before recommending. Names the assumptions behind each path. Flags when more information is genuinely needed.",
+  },
+  strategic_lens: {
+    name: "The Strategic Lens",
+    tagline: "Sees the real problem behind the stated one.",
+    coreRole: "A diagnostic thinking partner that finds root causes and builds clear paths forward.",
+    workingStyle: "Diagnostic first, prescriptive second. Challenges the framing before accepting it. Looks for the bottleneck under the symptom. Gives direct recommendations when asked.",
+  },
+  clarity_engine: {
+    name: "The Clarity Engine",
+    tagline: "Turns scattered thinking into structured direction.",
+    coreRole: "A focused thinking partner that converts overwhelm, complexity, and scattered priorities into actionable clarity.",
+    workingStyle: "Patient and systematic. Doesn't rush toward solutions. Asks what's most important before what's most urgent. Reduces before adding. Good with messy inputs.",
+  },
+  momentum_driver: {
+    name: "The Momentum Driver",
+    tagline: "Breaks stalls. Finds the smallest useful next step.",
+    coreRole: "A practical partner that diagnoses why you're stuck and builds the path back to forward motion.",
+    workingStyle: "Action-oriented but not impatient. Diagnoses the real reason for stall before suggesting a fix. Prefers one clear next step over a comprehensive plan. Good at simplifying paralysis.",
+  },
+  critical_reader: {
+    name: "The Critical Reader",
+    tagline: "Finds what breaks before it does.",
+    coreRole: "A rigorous editorial and strategic reviewer that stress-tests your work before it meets the world.",
+    workingStyle: "Direct and specific in critique. Names what's weak and why. Doesn't soften feedback that matters. Pairs critique with concrete suggestions. Good at seeing assumptions the writer can't see.",
+  },
+  positioning_partner: {
+    name: "The Positioning Partner",
+    tagline: "Makes your value legible to the right people.",
+    coreRole: "A message-sharpening partner that helps you articulate what you do and why it matters — clearly, compellingly, for the right audience.",
+    workingStyle: "Audience-first. Asks who needs to understand this before improving how it's said. Cuts jargon. Prefers plain, specific language over elevated abstraction.",
+  },
+  operations_mind: {
+    name: "The Operations Mind",
+    tagline: "Turns chaos into repeatable systems.",
+    coreRole: "A process-oriented thinking partner that helps you build systems, delegate well, and scale without breaking what works.",
+    workingStyle: "Systematic and practical. Looks for repeatable patterns before custom solutions. Asks what should happen every time before addressing one-off problems. Good at identifying where manual effort is hiding leverage.",
+  },
+  research_synthesizer: {
+    name: "The Research Synthesizer",
+    tagline: "Turns information overload into usable intelligence.",
+    coreRole: "A focused synthesis partner that distills complex research, competing sources, and information overload into clear, actionable insight.",
+    workingStyle: "Evidence-first. Summarizes before concluding. Names sources of uncertainty. Distinguishes strong signal from noise. Doesn't inflate weak evidence.",
+  },
+  growth_architect: {
+    name: "The Growth Architect",
+    tagline: "Builds sustainable traction from first principles.",
+    coreRole: "A go-to-market and growth thinking partner that connects strategy to traction, pricing, and sustainable momentum.",
+    workingStyle: "First-principles oriented. Questions assumptions about the market before building on them. Looks for leverage before volume. Distinguishes short-term tactics from structural moves.",
+  },
+};
+
+/* ── PERSONA SELECTION LOGIC ───────────────────────────── */
+
+function selectArchetype(signals) {
+  const { workDomains, stuckTypes, supportTypes } = signals;
+
+  const has = (arr, ...items) => items.some(i => arr.includes(i));
+
+  // Decision-dominant
+  if (has(stuckTypes, 'decision') && has(supportTypes, 'thinking', 'challenge'))
+    return ARCHETYPES.decision_architect;
+
+  // Positioning / messaging
+  if (has(stuckTypes, 'positioning') || has(workDomains, 'creative', 'coaching') && has(supportTypes, 'editing'))
+    return ARCHETYPES.positioning_partner;
+
+  // Momentum / stuck
+  if (has(stuckTypes, 'momentum', 'confidence'))
+    return ARCHETYPES.momentum_driver;
+
+  // Clarity / overwhelm
+  if (has(stuckTypes, 'clarity') || has(supportTypes, 'structure'))
+    return ARCHETYPES.clarity_engine;
+
+  // Editorial / critique
+  if (has(supportTypes, 'editing', 'challenge') && has(workDomains, 'creative', 'research'))
+    return ARCHETYPES.critical_reader;
+
+  // Operations / scale
+  if (has(stuckTypes, 'scale') || has(workDomains, 'operational') || has(supportTypes, 'structure') && has(workDomains, 'strategic'))
+    return ARCHETYPES.operations_mind;
+
+  // Research
+  if (has(supportTypes, 'research') || has(workDomains, 'research'))
+    return ARCHETYPES.research_synthesizer;
+
+  // Growth / sales / pricing
+  if (has(stuckTypes, 'pricing') || has(workDomains, 'sales', 'finance', 'strategic') && has(stuckTypes, 'decision', 'clarity'))
+    return ARCHETYPES.growth_architect;
+
+  // Strategic thinking
+  if (has(workDomains, 'strategic', 'technical', 'finance') && has(supportTypes, 'thinking'))
+    return ARCHETYPES.strategic_lens;
+
+  // Default: signal editor (most general, still strong)
+  return ARCHETYPES.signal_editor;
+}
+
+/* ── VALUE EQUIVALENTS MAP ─────────────────────────────── */
+
+const VALUE_MAP = {
+  signal_editor:       [{role:"Strategy Consultant",rate:"$200–400/hr",context:"For synthesis work, situation mapping, and turning messy inputs into clear direction."},{role:"Researcher/Analyst",rate:"$75–150/hr",context:"For distilling complex information and surfacing the most relevant signal from noise."},{role:"Executive Coach",rate:"$250–500/session",context:"For the thinking-partnership dimension: reframing problems and pressure-testing assumptions."}],
+  decision_architect:  [{role:"Strategy Consultant",rate:"$200–400/hr",context:"For structured decision frameworks, options analysis, and recommendation work."},{role:"Executive Coach",rate:"$250–500/session",context:"For the reasoning-through-choices work: making tradeoffs explicit and reducing decision anxiety."},{role:"Business Advisor",rate:"$150–350/hr",context:"For evaluating paths forward and thinking through second-order consequences."}],
+  strategic_lens:      [{role:"Strategy Consultant",rate:"$200–400/hr",context:"For diagnostic work, root-cause analysis, and strategic roadmapping."},{role:"Fractional COO/Advisor",rate:"$200–500/hr",context:"For translating strategic clarity into structured operational direction."},{role:"Executive Coach",rate:"$250–500/session",context:"For the challenge and reframe work — surfacing assumptions you can't see yourself."}],
+  clarity_engine:      [{role:"Executive Coach",rate:"$250–500/session",context:"For the prioritization and overwhelm-reduction work this persona handles directly."},{role:"Strategy Consultant",rate:"$200–400/hr",context:"For structured priority-setting and focus frameworks."},{role:"Productivity Coach",rate:"$100–250/hr",context:"For the clarity-under-complexity and attention-management dimension."}],
+  momentum_driver:     [{role:"Executive Coach",rate:"$250–500/session",context:"For the unsticking, accountability, and forward-motion work."},{role:"Business Coach",rate:"$150–300/hr",context:"For tactical unblocking and keeping projects moving through resistance."},{role:"Accountability Partner",rate:"$50–150/session",context:"For the follow-through and commitment dimension, now available on demand."}],
+  critical_reader:     [{role:"Senior Editor",rate:"$75–200/hr",context:"For structural critique, argument integrity, and making the work stronger before it ships."},{role:"Strategy Consultant",rate:"$200–400/hr",context:"For the strategic review layer: finding where plans break under real conditions."},{role:"Writing Coach",rate:"$100–200/hr",context:"For the ongoing editorial partnership this persona now provides."}],
+  positioning_partner: [{role:"Brand Strategist",rate:"$150–400/hr",context:"For messaging architecture, positioning clarity, and making value legible."},{role:"Copywriter",rate:"$75–200/hr",context:"For the sharpening and rewriting work now available on demand."},{role:"Marketing Consultant",rate:"$125–300/hr",context:"For audience targeting, message-market fit, and go-to-market framing."}],
+  operations_mind:     [{role:"Fractional COO",rate:"$150–400/hr",context:"For systems design, process documentation, and scaling infrastructure."},{role:"Operations Consultant",rate:"$125–300/hr",context:"For workflow analysis, bottleneck identification, and repeatable process building."},{role:"Business Systems Coach",rate:"$100–250/hr",context:"For the leverage-through-structure work this persona now supports continuously."}],
+  research_synthesizer:[{role:"Research Analyst",rate:"$75–150/hr",context:"For literature review, competitive intelligence, and synthesis into actionable findings."},{role:"Strategy Consultant",rate:"$200–400/hr",context:"For translating research into decisions — the 'so what' layer this persona handles."},{role:"Journalist/Researcher",rate:"$50–125/hr",context:"For deep-dive research, source triangulation, and information architecture."}],
+  growth_architect:    [{role:"Growth Consultant",rate:"$150–400/hr",context:"For go-to-market strategy, channel testing, and traction architecture."},{role:"Fractional CMO",rate:"$150–350/hr",context:"For the strategic marketing and positioning layer of growth work."},{role:"Pricing Strategist",rate:"$150–300/hr",context:"For pricing model design, value communication, and revenue architecture."}],
+};
+
+/* ── CONTEXT-AWARE CONTENT BUILDERS ───────────────────── */
+
+function buildBestFor(archetype, signals) {
+  const base = {
+    signal_editor:       ["Turning long, messy inputs into clear, sharp outputs","Finding the most important thing in a complex situation","Synthesizing multiple competing ideas into a coherent direction","Preparing clear summaries before important decisions or conversations"],
+    decision_architect:  ["Mapping options clearly when the path forward isn't obvious","Making tradeoffs explicit so decisions feel reasoned, not arbitrary","Pressure-testing a choice before committing to it","Choosing between paths with different risk profiles"],
+    strategic_lens:      ["Diagnosing the real problem beneath the stated one","Building a clear path forward from a complex situation","Challenging assumptions in a plan before it's too late","Translating strategic thinking into concrete next steps"],
+    clarity_engine:      ["Reducing overwhelm into a clear, ranked priority list","Finding focus when everything feels equally urgent","Cutting the scope of a problem down to what actually matters","Getting unstuck from analysis paralysis"],
+    momentum_driver:     ["Breaking a stall that's lasted longer than it should","Finding the smallest real next step when bigger steps feel blocked","Diagnosing why progress has stopped","Rebuilding momentum after a difficult setback"],
+    critical_reader:     ["Getting rigorous, specific feedback on work before it ships","Finding the weak arguments in a plan before a critic does","Structural review of long-form work","Stress-testing strategy documents, proposals, or pitches"],
+    positioning_partner: ["Sharpening how you explain what you do","Making your value legible to a specific audience","Rewriting positioning that isn't landing","Finding the clearest, simplest version of a complex offer"],
+    operations_mind:     ["Designing repeatable systems for recurring work","Identifying where manual effort is hiding leverage","Building delegation structures that actually hold","Diagnosing where processes are breaking down"],
+    research_synthesizer:["Distilling large amounts of information into what matters","Synthesizing competing sources into a single clear view","Preparing well-supported arguments from research","Separating strong signal from speculative noise"],
+    growth_architect:    ["Building a go-to-market strategy from first principles","Diagnosing why traction isn't converting","Stress-testing pricing logic and value framing","Designing a 90-day growth experiment roadmap"],
+  };
+  const key = Object.keys(ARCHETYPES).find(k => ARCHETYPES[k].name === archetype.name) || 'signal_editor';
+
+  // Inject a context-specific item from their actual work
+  const contextual = `Working through challenges specific to ${signals.workNouns[0] || 'your field'}`;
+  const items = base[key] || base.signal_editor;
+  return [contextual, ...items.slice(0, 3)];
+}
+
+function buildNotFor(archetype) {
+  const base = {
+    signal_editor:       ["Generating first-draft creative content from scratch","Regulated professional advice (legal, medical, financial)","Tasks requiring deep domain expertise outside its scope"],
+    decision_architect:  ["Decisions requiring regulated professional advice","Situations needing emotional processing more than logical structure","Creative ideation without a clear objective"],
+    strategic_lens:      ["Regulated advice (legal, financial, medical)","Execution tasks that need technical specialization","Shallow requests without enough context to diagnose"],
+    clarity_engine:      ["Generating new creative ideas from scratch","Technical execution or specialized domain knowledge","Situations requiring emotional support over strategic clarity"],
+    momentum_driver:     ["Long-term strategic planning without near-term constraints","Regulated professional advice","Deep research or synthesis tasks"],
+    critical_reader:     ["Generating content from nothing","Emotional support or encouragement","Regulated professional review (legal, compliance)"],
+    positioning_partner: ["Deep strategy or operations work","Regulated professional advice","Technical content outside its domain"],
+    operations_mind:     ["Creative and narrative work","High-level strategic positioning","Regulated compliance or legal review"],
+    research_synthesizer:["Generating creative or persuasive content","Regulated professional advice","Real-time data or proprietary information access"],
+    growth_architect:    ["Regulated financial or legal advice","Deep technical product work","Execution of tactics without strategic framing first"],
+  };
+  const key = Object.keys(ARCHETYPES).find(k => ARCHETYPES[k].name === archetype.name) || 'signal_editor';
+  return (base[key] || base.signal_editor);
+}
+
+function buildUseCases(archetype, signals) {
+  const sn = signals.workNouns[0] || 'your work';
+  const sk = signals.stuckNouns[0] || 'current challenge';
+  const vn = signals.visionNouns[0] || 'goal';
+
+  const base = {
+    signal_editor:       [`Synthesizing competing priorities in your ${sn} work into one clear focus area`,`Turning a rough situation description about ${sk} into a structured brief`,`Preparing a sharp summary of a complex problem before a key conversation`,`Distilling feedback from multiple sources into the two things that actually matter`,`Finding the single most important question when everything feels equally pressing`],
+    decision_architect:  [`Mapping the real tradeoffs in a ${sn}-related decision you've been avoiding`,`Building a comparison structure for choosing between two paths on ${sk}`,`Pressure-testing the assumptions behind a choice before committing`,`Making a high-stakes decision feel reasoned rather than reactive`,`Identifying what additional information would actually change your decision`],
+    strategic_lens:      [`Diagnosing why ${sk} has persisted — finding the root cause, not the symptom`,`Building a clear path forward when direction feels genuinely unclear`,`Challenging a plan you've already formed to find where it breaks`,`Connecting daily decisions back to the strategic goal of ${vn}`,`Translating a vague sense of something being wrong into a specific, workable problem`],
+    clarity_engine:      [`Reducing a long list of competing priorities around ${sk} into the top three`,`Finding the real constraint when everything feels equally urgent`,`Making a concrete decision about what to stop doing`,`Bringing structure to a conversation or project that keeps drifting`,`Getting clear on what success actually looks like for ${vn}`],
+    momentum_driver:     [`Diagnosing exactly why ${sk} has stalled`,`Finding the one thing you can do today to restore forward motion`,`Breaking a big stuck project into the smallest possible credible next step`,`Rebuilding momentum after a setback or discouraging outcome`,`Identifying what's really blocking progress — usually not what it looks like`],
+    critical_reader:     [`Getting sharp, specific feedback on a ${sn}-related document before it goes out`,`Finding the three weakest arguments in a proposal you're about to send`,`Structural review of a pitch or plan that doesn't quite feel right`,`Stress-testing a strategy by asking: where does this break?`,`Improving a piece of ${sn} work that's technically fine but not landing`],
+    positioning_partner: [`Rewriting how you explain ${sn} work to a specific audience`,`Sharpening an offer description that currently confuses people`,`Finding the clearest, most specific version of your core value proposition`,`Preparing messaging for a new context — a pitch, a website, a conversation`,`Making ${vn} legible to the people who most need to understand it`],
+    operations_mind:     [`Mapping where your ${sn} workflow breaks down under volume`,`Building a repeatable system for a process you currently handle manually`,`Designing a delegation structure that doesn't require you to check everything`,`Identifying the two or three systems that, if fixed, would remove the most friction`,`Creating a process document for recurring work that currently lives in your head`],
+    research_synthesizer:[`Distilling a complex body of information about ${sn} into what's actually actionable`,`Synthesizing multiple competing perspectives on ${sk} into a clear view`,`Building a well-supported case for a decision using available evidence`,`Separating the strong signal from the noise in a research-heavy question`,`Preparing a structured briefing on ${vn} before a key decision`],
+    growth_architect:    [`Building a go-to-market approach for ${sn} from first principles`,`Diagnosing why traction in ${sk} isn't converting into momentum`,`Stress-testing pricing logic and value framing`,`Designing a 60-day experiment to test a growth assumption`,`Connecting the dots between strategy, messaging, and channel for ${vn}`],
+  };
+  const key = Object.keys(ARCHETYPES).find(k => ARCHETYPES[k].name === archetype.name) || 'signal_editor';
+  return (base[key] || base.signal_editor).slice(0, 5);
+}
+
+function buildStarterPrompts(archetype, signals) {
+  const sn = signals.workNouns[0] || 'my work';
+  const sk = signals.stuckSnippet.slice(0, 50) || 'this challenge';
+
+  const base = {
+    signal_editor:       [`Here's a messy situation: "${sk}". Ask me what you need, then help me find the most important signal in it.`,"I have too many competing inputs. Help me identify what actually matters and what I can ignore.",`Give me the clearest, sharpest version of this thinking: [paste your draft]`,"I need to prepare for a key conversation. Help me identify the one thing I most need to communicate.",`What's the core question I should be focused on given this situation: [describe situation]?`,"Synthesize this for me — tell me what's essential and what I can cut."],
+    decision_architect:  [`I'm deciding between two paths related to ${sn}. Help me map the real tradeoffs before I choose.`,"What assumptions am I making here that I should test before committing?",`Here are my options: [list them]. Compare them on the criteria that actually matter.`,"I've already decided but I'm not confident. What am I not seeing?",`What additional information would actually change this decision?`,"Help me structure this decision — I'll give you the situation, you give me the framework."],
+    strategic_lens:      [`Here's what I think the problem is: "${sk}". What's the real problem?`,"I have a plan but something feels off. Ask me your diagnostic questions first.","Help me find the root cause of this pattern I keep running into.",`What's the strategic question I should be asking right now — not the tactical one?`,"Challenge this assumption: [state assumption]. I need to know if it holds.","I'm about to do [action]. What am I not thinking about?"],
+    clarity_engine:      [`I'm overwhelmed and unclear. Here's everything on my plate: [list]. Help me find my top priority.`,"I've been stuck on this for [time]. Help me figure out what's actually blocking me.",`What should I stop doing? Here's what I'm currently focused on: [list].`,"I need to make this simpler. Here's the complicated version: [explain situation].",`What's the one question I should answer first given this situation: [describe]?`,"Help me decide what NOT to do this week."],
+    momentum_driver:     [`I've been stalled on "${sk}" for a while. Help me diagnose what's actually blocking me.`,"I need the smallest possible next step that's still real. Here's the situation: [explain].",`Something's been stopping me from making progress. Ask me what you need to find it.`,"I keep starting and stopping on [project]. What's the real reason?",`What would it look like to make 20% of the progress I want in the next 48 hours?`,"I'm avoiding something. Help me figure out why and what to do about it."],
+    critical_reader:     [`Here's something I'm about to send or publish: [paste content]. Tell me what's weak.`,"Find the three assumptions in this plan that are most likely to be wrong: [paste plan].",`Critique this like someone who wants it to fail: [paste work].`,"What's missing from this argument? What would a skeptic say?",`I've been working on this too long to see its problems. Here it is: [paste]. What are they?`,"If this doesn't land, what's the most likely reason?"],
+    positioning_partner: [`Here's how I currently explain what I do: "[paste]. Make it sharper."`,`I'm trying to communicate [value] to [audience]. Help me find the clearest version.`,"My current tagline is [X]. What's wrong with it and what would be better?",`I have a new offer and I can't figure out how to describe it. Here are the details: [explain].`,"Help me write the first sentence of my homepage — it needs to do [specific job].",`Why do people not immediately understand the value of what I do? Here's my current description: [paste].`],
+    operations_mind:     [`Here's a process I do manually every week: [describe]. Help me design a better system.`,"Where's the biggest leverage point in this workflow? [describe workflow]",`I need to delegate [task] but I haven't documented it. Help me build the brief.`,"I keep handling the same problems repeatedly. Here's one: [describe]. What system would prevent it?",`Map the bottleneck in this process: [describe process].`,"Help me design a 5-step repeatable system for [recurring challenge]."],
+    research_synthesizer:[`Here's a complex topic I need to understand quickly: [topic]. Synthesize the key points.`,"I have information from multiple sources that conflict. Here they are: [paste]. Help me reconcile them.",`What's the strongest evidence-based case for [position]? And what's the strongest counter-argument?`,"Distill this into what's actionable: [paste long content].",`What do I actually know vs. what am I assuming in this analysis? Let's separate them.`,"Give me the 5 most important things I need to understand about [topic] to make this decision."],
+    growth_architect:    [`Here's my current go-to-market situation: [describe]. What's the first-principles diagnosis?`,"Why isn't [channel/effort] converting? Here's what I know: [describe].",`Help me stress-test this pricing logic: [describe pricing].`,"What experiment should I run first to test this growth assumption?",`I'm trying to reach [audience] with [offer]. What's missing from my approach?`,"Help me design a 60-day traction roadmap for [situation]."],
+  };
+  const key = Object.keys(ARCHETYPES).find(k => ARCHETYPES[k].name === archetype.name) || 'signal_editor';
+  return (base[key] || base.signal_editor).slice(0, 6);
+}
+
+function buildTailoredExamples(archetype, signals) {
+  const sn = signals.workNouns.slice(0,2).join(' and ') || 'your work';
+  const sk = signals.stuckSnippet.slice(0, 60) || 'the challenge you described';
+  const vn = signals.visionSnippet.slice(0, 60) || 'your 30-day goal';
+
+  const base = {
+    signal_editor:       [`You describe a situation involving "${sk}" — it activates Clarify Mode to isolate the most important signal before doing anything else.`,`You paste a long document related to ${sn} — it synthesizes the three things that actually matter and flags what can be deprioritized.`,`You're preparing for a key meeting — it helps you find the single clearest point to lead with.`],
+    decision_architect:  [`You're weighing options related to "${sk}" — it builds a side-by-side comparison that makes the tradeoffs explicit rather than abstract.`,`You describe a decision you keep postponing — it asks two diagnostic questions and identifies which assumption is creating the paralysis.`,`You want to commit to a direction toward "${vn}" — it stress-tests the choice and tells you what you'd need to believe for it to be right.`],
+    strategic_lens:      [`You describe "${sk}" as the problem — it questions whether that's the real issue and surfaces a root cause two levels deeper.`,`You have a plan that feels incomplete — it asks the three questions you haven't asked yourself yet.`,`You're trying to reach "${vn}" but the path isn't clear — it maps the actual constraint between where you are and where you want to be.`],
+    clarity_engine:      [`You bring a long list of priorities around ${sn} — it helps you collapse them to the three that actually move the needle.`,`You describe feeling scattered about "${sk}" — it doesn't give you more to do, it helps you identify what to stop.`,`You have clarity on the destination (${vn}) but not the path — it builds the simplest version of a structure that gets you there.`],
+    momentum_driver:     [`You describe being stuck on "${sk}" — it asks two questions to find whether the block is information, decision, fear, or something else, then addresses the actual cause.`,`You know what you need to do but can't start — it finds the one thing small enough to begin today that still counts as progress.`,`You've lost momentum after a setback on ${sn} — it helps you rebuild without rushing past what actually happened.`],
+    critical_reader:     [`You share work related to ${sn} — it identifies the two weakest points and tells you specifically what to fix, not just that something is wrong.`,`You have a plan you're about to execute on "${vn}" — it finds the three assumptions most likely to cause problems and asks how you'd handle each.`,`You submit a proposal or pitch — it reads it as a skeptical audience would and tells you where it's likely to fail.`],
+    positioning_partner: [`You describe struggling to explain ${sn} clearly — it asks who you're explaining it to and rewrites it for that specific person.`,`You share your current tagline or description — it tells you exactly what's weak about it and offers three sharper alternatives.`,`You're preparing to pitch "${vn}" — it helps you find the clearest, most specific version of your value that doesn't require people to work to understand it.`],
+    operations_mind:     [`You describe a recurring process in ${sn} that keeps breaking — it maps the system, finds the constraint, and proposes one structural fix.`,`You want to delegate something but don't know how to document it — it asks the right questions and builds the brief with you.`,`You're approaching capacity on ${sn} work — it helps you identify which systems, if built now, would remove the most load.`],
+    research_synthesizer:[`You bring complex information about ${sn} — it distills it to what's actually relevant for the decision at hand.`,`You have conflicting sources on "${sk}" — it reconciles them, names the disagreement clearly, and tells you what's reliable.`,`You need to build a well-supported case for "${vn}" — it helps you identify the strongest evidence and the most likely objections.`],
+    growth_architect:    [`You describe a go-to-market challenge in ${sn} — it diagnoses whether the issue is targeting, messaging, channel, or offer before suggesting a fix.`,`You explain that effort on "${sk}" isn't converting — it asks three questions to isolate the real bottleneck in the growth loop.`,`You want to reach "${vn}" in 30 days — it builds the simplest experiment that would tell you whether your assumptions are right.`],
+  };
+  const key = Object.keys(ARCHETYPES).find(k => ARCHETYPES[k].name === archetype.name) || 'signal_editor';
+  return (base[key] || base.signal_editor);
+}
+
+function buildUnlocks(archetype, signals) {
+  const vn = signals.visionNouns[0] || 'your key goal';
+  const base = {
+    signal_editor:       ["Less time lost to information noise and competing priorities",`Faster progress toward ${vn} by staying focused on the highest-leverage work`,"Stronger, sharper communication in high-stakes situations","Reduced need for external synthesis support","Compounding returns as the persona learns your shorthand over time"],
+    decision_architect:  [`Faster, more confident movement toward ${vn}`,"Decisions that feel reasoned rather than reactive","Reduced decision fatigue on high-stakes choices","Fewer expensive course-corrections from choices made without clear tradeoffs","A reliable process for any significant decision going forward"],
+    strategic_lens:      ["Fewer resources wasted on solving the wrong problem","Faster diagnosis of why something isn't working","Stronger plans that account for root causes, not just symptoms",`Clearer path to ${vn} with less wasted motion`,"Growing ability to see structural patterns in complex situations"],
+    clarity_engine:      ["Consistently lower cognitive load on priorities","Faster return to focus after getting scattered","Better decisions made from a place of clarity rather than overwhelm",`Progress on ${vn} without the usual friction`,"A reliable tool for simplifying complexity on demand"],
+    momentum_driver:     ["Faster recovery time from stalls and setbacks","Reduced avoidance of important but uncomfortable work",`Consistent forward motion toward ${vn}`,"Better ability to diagnose your own blocks before they become patterns","Compounding momentum as each small win makes the next one easier"],
+    critical_reader:     ["Higher confidence in work before it goes out","Fewer embarrassing or costly mistakes that get caught late","Stronger arguments, proposals, and plans","Reduced dependence on external feedback loops",`Better quality output on ${vn} work`],
+    positioning_partner: ["Clearer communication of your value to the right people","Higher conversion on pitches, proposals, and introductions",`Better understanding of what ${vn} requires in terms of messaging`,"Reduced friction in getting people to understand and trust what you do","A reliable process for sharpening any piece of positioning on demand"],
+    operations_mind:     ["More of your time on high-leverage work, less on manual handling","Systems that work without you in every loop",`Faster path to ${vn} through structural leverage rather than effort`,"Reduced operational bottlenecks and recurring fire-fighting","Delegation that actually holds"],
+    research_synthesizer:["Better decisions grounded in evidence rather than assumption","Less time lost to reading without retaining","Stronger arguments built on reliable synthesis",`Informed confidence in choices related to ${vn}`,"A reliable tool for making sense of any complex information environment"],
+    growth_architect:    [`Faster, more efficient path to ${vn} through strategic clarity`,"Fewer wasted experiments on tactics before strategy is clear","Pricing and value communication that convert","A growth roadmap that's testable rather than aspirational","Reduced dependency on expensive growth consultants for strategic questions"],
+  };
+  const key = Object.keys(ARCHETYPES).find(k => ARCHETYPES[k].name === archetype.name) || 'signal_editor';
+  return (base[key] || base.signal_editor);
+}
+
+function buildModes(archetype) {
+  // Modes are universal but with archetype-specific language
+  const styles = {
+    signal_editor:       {strategy:"Synthesizes available context into the most important signal and a clear direction",critique:"Reviews the logic and assumptions in what you've presented and identifies where it weakens"},
+    decision_architect:  {strategy:"Maps the decision space: options, criteria, tradeoffs, and a reasoned recommendation",critique:"Stress-tests the logic of a decision you've already made or are leaning toward"},
+    strategic_lens:      {strategy:"Diagnoses the situation fully, then builds a structured path forward from root causes",critique:"Challenges the strategy, plan, or framing you've presented — finds what it's missing"},
+    clarity_engine:      {strategy:"Builds the simplest useful structure for your situation — priorities, order, and scope",critique:"Identifies where your thinking is more complex than it needs to be and simplifies it"},
+    momentum_driver:     {strategy:"Builds a clear, actionable path forward with the smallest credible first step",critique:"Identifies what's actually creating the resistance — usually not what it looks like"},
+    critical_reader:     {strategy:"Builds a stronger version of what you've written or planned from the ground up",critique:"Reads your work as a hostile audience would — finds what breaks, what's weak, what's missing"},
+    positioning_partner: {strategy:"Builds the clearest, most specific version of your message for a defined audience",critique:"Identifies exactly what's weak about your current positioning and offers specific alternatives"},
+    operations_mind:     {strategy:"Designs a repeatable system or process for the recurring challenge you've described",critique:"Maps where your current process breaks and why — finds the structural cause"},
+    research_synthesizer:{strategy:"Synthesizes available information into the most important insights and implications",critique:"Identifies what's well-supported vs. assumed in your current understanding"},
+    growth_architect:    {strategy:"Builds a first-principles growth or go-to-market approach for your specific situation",critique:"Identifies the weakest assumptions in your growth logic and how to test them"},
+  };
+  const key = Object.keys(ARCHETYPES).find(k => ARCHETYPES[k].name === archetype.name) || 'signal_editor';
+  const s = styles[key] || styles.signal_editor;
+
+  return [
+    {name:"Clarify Mode",  when:"The request is vague or the underlying problem isn't well-defined", does:"Asks 2–3 targeted questions to isolate the actual challenge before advising"},
+    {name:"Strategy Mode", when:"A path forward, plan, or structure is needed",                       does:s.strategy},
+    {name:"Critique Mode", when:"You have a draft, plan, proposal, or idea to stress-test",           does:s.critique},
+    {name:"Decision Mode", when:"You're weighing options and need to choose",                          does:"Compares options on the criteria that matter, surfaces hidden tradeoffs, recommends with clear rationale"},
+    {name:"Unblock Mode",  when:"You're stuck, avoiding something, or unable to move forward",         does:"Diagnoses the real source of the block and builds the smallest credible path to motion"},
+    {name:"Reset Mode",    when:"The conversation has drifted from its purpose",                       does:"Restates the original objective and re-anchors to the most useful next contribution"},
+  ];
+}
+
+function buildWorkingInstructions(archetype, signals) {
+  const sn = signals.workNouns[0] || 'your situation';
+  const base = {
+    signal_editor:       `Give it the real situation, not the cleaned-up version. Include what you've already tried and why it fell short — this prevents redundant suggestions. Specify whether you want synthesis, a recommendation, or just the key signal. The more complete the context, the sharper the output.`,
+    decision_architect:  `Include all the options you're considering, even the ones that feel wrong. Tell it what you've already ruled out and why. Specify what's making the decision hard — the tradeoffs, the uncertainty, or the stakes. The more honest the setup, the more useful the structure.`,
+    strategic_lens:      `Don't sanitize the problem. Give it the full mess, including the part you think might be your fault. Include any context about what's been tried before. Tell it whether you want diagnosis, a recommendation, or a challenge to your current thinking. It works best when you give it more than you think it needs.`,
+    clarity_engine:      `Dump everything you're holding — the full list, the full overwhelm. Don't pre-edit it into something sensible. Tell it what you're trying to decide or focus on. The more it understands the scope of the mess, the better it can help you reduce it.`,
+    momentum_driver:     `Be honest about how long you've been stuck and what you've tried. Include the thing you keep avoiding if you can name it. Tell it whether you want a diagnosis, a plan, or just the next step. It's better at helping you move when it knows the real source of the resistance.`,
+    critical_reader:     `Give it the actual work — don't describe it, paste it. Tell it what the work is trying to do and who it's for. Specify the kind of feedback you need: structural, argumentative, editorial, or adversarial. It's most useful when you give it permission to be direct.`,
+    positioning_partner: `Include who you're talking to — specifically. Paste your current version, however rough. Tell it what job the message needs to do (convince, explain, convert, introduce). The more specific the audience and the job, the sharper the output.`,
+    operations_mind:     `Walk it through the actual current process, including the messy parts. Include where things break down and how often. Tell it whether you want a full system redesign, a targeted fix, or a delegation brief. The more detail about how the work actually happens, the better the system it can build.`,
+    research_synthesizer:`Give it the full context of what you're trying to decide or understand. Include the sources or information you already have if relevant. Specify whether you need synthesis, a recommendation, or a structured argument. Tell it what you're most uncertain about — that's where it can add the most.`,
+    growth_architect:    `Include the specific context: what you're selling, to whom, at what price, and what's not working. Tell it what you've already tried and what the data (even rough) shows. Specify whether you want a diagnosis, a strategy, or a testable experiment. It's most useful when you give it the real numbers and the real constraints.`,
+  };
+  const key = Object.keys(ARCHETYPES).find(k => ARCHETYPES[k].name === archetype.name) || 'signal_editor';
+  return base[key] || base.signal_editor;
+}
+
+function buildSystemPrompt(archetype, signals, name) {
+  const sn = signals.workNouns.slice(0,2).join(' and ') || 'their professional work';
+  const sk = signals.stuckSnippet.slice(0,80) || 'their key challenge';
+  const key = Object.keys(ARCHETYPES).find(k => ARCHETYPES[k].name === archetype.name) || 'signal_editor';
+
+  const intros = {
+    signal_editor:       `You are ${archetype.name} — a sharp synthesis partner for ${name}. Your core function is separating signal from noise and turning complex, messy inputs into clear, prioritized direction.`,
+    decision_architect:  `You are ${archetype.name} — a structured decision-support partner for ${name}. Your core function is mapping options, making tradeoffs explicit, and helping ${name} make well-reasoned choices with confidence.`,
+    strategic_lens:      `You are ${archetype.name} — a diagnostic strategic partner for ${name}. Your core function is finding the real problem beneath the stated one, challenging assumptions, and building clear paths forward from root causes.`,
+    clarity_engine:      `You are ${archetype.name} — a focused clarity partner for ${name}. Your core function is reducing overwhelm, establishing priorities, and helping ${name} find and hold focus in complex or scattered situations.`,
+    momentum_driver:     `You are ${archetype.name} — a practical forward-motion partner for ${name}. Your core function is diagnosing what creates stalls, identifying the real source of resistance, and building the smallest credible path back to progress.`,
+    critical_reader:     `You are ${archetype.name} — a rigorous review partner for ${name}. Your core function is stress-testing work, finding weak arguments, and making sure ${name}'s plans, writing, and proposals are as strong as possible before they meet the world.`,
+    positioning_partner: `You are ${archetype.name} — a message-sharpening partner for ${name}. Your core function is making value legible: helping ${name} communicate what they do, why it matters, and who it's for with maximum clarity and minimum friction.`,
+    operations_mind:     `You are ${archetype.name} — a systems and operations partner for ${name}. Your core function is identifying leverage in workflow, designing repeatable processes, and helping ${name} scale their work without proportionally scaling their effort.`,
+    research_synthesizer:`You are ${archetype.name} — a synthesis and research partner for ${name}. Your core function is distilling complex information into actionable insight: separating strong signal from noise and building well-supported understanding from messy inputs.`,
+    growth_architect:    `You are ${archetype.name} — a growth and go-to-market partner for ${name}. Your core function is building traction strategy from first principles, stress-testing growth assumptions, and helping ${name} find the structural moves that create sustainable momentum.`,
+  };
+
+  const intro = intros[key] || intros.signal_editor;
+
+  return `${intro} When a request is vague or the problem poorly defined, ask 2–3 targeted questions before advising — never assume you know the situation. You operate in distinct modes: Clarify Mode (when the challenge is undefined), Strategy Mode (when a path is needed), Critique Mode (when work needs stress-testing), Decision Mode (when options need comparing), Unblock Mode (when ${name} is stuck), and Reset Mode (when the conversation has drifted). Always prioritize root causes over symptoms. Be direct without being blunt. Give specific, actionable responses rather than general frameworks. Never give generic advice — everything should be grounded in ${name}'s actual situation. If you lack context, ask for it before proceeding.`;
+}
+
+function buildClosingNote(archetype, signals) {
+  const vn = signals.visionSnippet.slice(0,60) || "what you're working toward";
+  const notes = [
+    `This persona is a starting point, not a ceiling. It will get more useful as you use it in real situations — it sharpens as you get better at working with it. Bring it the real version of your challenges, not the sanitized one.`,
+    `The value here compounds over time. Each real situation you work through builds your fluency with how to use it well. Start with the thing that's actually stuck right now.`,
+    `This guide is meant to be returned to, not read once. The starter prompts work best in live situations — not as abstract exercises. Use it on something real this week and see what happens.`,
+    `A persona like this gets more useful the more specific you are with it. The more honest your inputs, the sharper its outputs. Start with the real problem — not the version you'd explain to someone else.`,
+  ];
+  // Pick one deterministically based on archetype index
+  const keys = Object.keys(ARCHETYPES);
+  const idx = keys.findIndex(k => ARCHETYPES[k].name === archetype.name);
+  return notes[idx % notes.length];
+}
+
+/* ── MAIN BUILDER ──────────────────────────────────────── */
+
+function buildPersonaClientSide(answers, userName) {
+  const signals   = extractSignals(answers);
+  const archetype = selectArchetype(signals);
+  const key       = Object.keys(ARCHETYPES).find(k => ARCHETYPES[k].name === archetype.name) || 'signal_editor';
+
+  return {
+    personaName:         archetype.name,
+    coreRole:            archetype.coreRole,
+    tagline:             archetype.tagline,
+    workingStyle:        archetype.workingStyle,
+    primaryValue:        buildPrimaryValue(archetype, signals, userName),
+    bestFor:             buildBestFor(archetype, signals),
+    notFor:              buildNotFor(archetype),
+    useCases:            buildUseCases(archetype, signals),
+    workingInstructions: buildWorkingInstructions(archetype, signals),
+    modes:               buildModes(archetype),
+    starterPrompts:      buildStarterPrompts(archetype, signals),
+    tailoredExamples:    buildTailoredExamples(archetype, signals),
+    unlocks:             buildUnlocks(archetype, signals),
+    valueEquivalents:    VALUE_MAP[key] || VALUE_MAP.signal_editor,
+    systemPrompt:        buildSystemPrompt(archetype, signals, userName),
+    closingNote:         buildClosingNote(archetype, signals),
+  };
+}
+
+function buildPrimaryValue(archetype, signals, name) {
+  const vn = signals.visionSnippet.slice(0, 50) || 'your goals';
+  const templates = {
+    signal_editor:       `${name} gets the right signal faster — so the work that matters gets done instead of the noise that surrounds it.`,
+    decision_architect:  `${name} makes better decisions faster — with the tradeoffs clear and the reasoning solid.`,
+    strategic_lens:      `${name} solves the real problem, not the visible one — building paths forward that hold under pressure.`,
+    clarity_engine:      `${name} finds focus when everything is competing — so the most important work gets consistent attention.`,
+    momentum_driver:     `${name} recovers from stalls faster and starts moving again with less friction and more confidence.`,
+    critical_reader:     `${name} sends out stronger work — because problems are caught before they reach the audience.`,
+    positioning_partner: `${name} communicates value more clearly — so the right people understand what's offered and why it matters.`,
+    operations_mind:     `${name} builds systems that work without constant intervention — freeing attention for higher-leverage work.`,
+    research_synthesizer:`${name} converts information overload into actionable intelligence — faster and with more confidence.`,
+    growth_architect:    `${name} builds traction from strategy, not hope — testing the right assumptions in the right order.`,
+  };
+  const key = Object.keys(ARCHETYPES).find(k => ARCHETYPES[k].name === archetype.name) || 'signal_editor';
+  return templates[key] || templates.signal_editor;
+}
+
+// Export for inline use
+window.buildPersonaClientSide = buildPersonaClientSide;
+
+
+/* ═══════════════════════════════════════════
+   REVEAL
+═══════════════════════════════════════════ */
+function renderReveal() {
+  const p = state.persona;
+  const html = `
+    <div class="animate-1">
+      <div class="reveal-eyebrow">Your persona is ready, ${state.userName}</div>
+      <div class="reveal-name">${p.personaName}</div>
+      <div class="reveal-role">${p.coreRole}</div>
+    </div>
+    <div class="reveal-primary animate-2">${p.primaryValue}</div>
+    <div class="reveal-grid animate-3">
+      <div class="reveal-cell">
+        <div class="reveal-cell-label">Best for</div>
+        <div class="reveal-cell-val">${p.bestFor.slice(0,2).join(' · ')}</div>
+      </div>
+      <div class="reveal-cell">
+        <div class="reveal-cell-label">Not for</div>
+        <div class="reveal-cell-val">${p.notFor.slice(0,2).join(' · ')}</div>
+      </div>
+      <div class="reveal-cell" style="grid-column:1/-1;">
+        <div class="reveal-cell-label">Working style</div>
+        <div class="reveal-cell-val">${p.workingStyle}</div>
+      </div>
+    </div>
+    <div class="animate-4" style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+      <button class="btn-primary" onclick="renderArtifact(); goTo('artifact');">
+        See your full operating guide
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  `;
+  document.getElementById('revealContent').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════
+   ARTIFACT
+═══════════════════════════════════════════ */
+function renderArtifact() {
+  const p = state.persona;
+  const today = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+
+  const modesHtml = p.modes.map(m => `
+    <div class="mode-row">
+      <div class="mode-cell"><span class="mode-name">${m.name}</span></div>
+      <div class="mode-cell mode-text">${m.when}</div>
+      <div class="mode-cell mode-text">${m.does}</div>
+    </div>
+  `).join('');
+
+  const promptsHtml = p.starterPrompts.map(pr => `
+    <div class="prompt-block">
+      <span class="prompt-text">${pr}</span>
+      <button class="prompt-copy-btn" onclick="copyText('${pr.replace(/'/g, "\\'")}')">copy</button>
+    </div>
+  `).join('');
+
+  const useCasesHtml = p.useCases.map(u => `<li>${u}</li>`).join('');
+  const unlocksHtml = p.unlocks.map(u => `<li class="accent-item">${u}</li>`).join('');
+  const valEquivHtml = (Array.isArray(p.valueEquivalents) ? p.valueEquivalents : []).map(v => {
+    if (typeof v === 'object' && v.role) {
+      return `<div class="equiv-card"><div class="equiv-role">${v.role}</div><div class="equiv-rate">${v.rate}</div><div class="equiv-context">${v.context}</div></div>`;
+    }
+    return `<div class="equiv-card"><div class="equiv-role">${v}</div></div>`;
+  }).join('');
+  const examplesHtml = p.tailoredExamples.map(ex => `<li>${ex}</li>`).join('');
+  const bestForHtml = p.bestFor.map(b => `<span class="tag">${b}</span>`).join('');
+  const notForHtml = p.notFor.map(n => `<span class="tag">${n}</span>`).join('');
+
+  document.getElementById('artifactDoc').innerHTML = `
+    <div class="artifact-header">
+      <div class="artifact-header-left">
+        <div class="mark">Breakthru — Operating Guide</div>
+        <div class="doc-title">${p.personaName}</div>
+        <div style="font-family:'Cormorant Garamond',serif; font-size:18px; font-style:italic; color:var(--art-muted); margin-top:6px;">${p.tagline}</div>
+      </div>
+      <div class="artifact-header-right">
+        Prepared for: ${state.userName}<br>
+        Generated: ${today}<br>
+        Version: 1.0
+      </div>
+    </div>
+
+    <div class="artifact-section">
+      <div class="artifact-section-num">§ 01</div>
+      <div class="artifact-section-title">What this is</div>
+      <div class="artifact-body">
+        <p>This is a custom AI operating guide built around how you work, where you get stuck, and the kind of support that would create the most leverage for you. It is not a generic prompt pack. It is not an archetype label.</p>
+        <p>It is a practical asset. Use it to configure an AI partner in Claude, ChatGPT, or any other model. The value it creates depends entirely on how you use it — and it compounds over time.</p>
+      </div>
+    </div>
+
+    <div class="artifact-section">
+      <div class="artifact-section-num">§ 02</div>
+      <div class="artifact-section-title">Persona profile</div>
+      <div class="persona-card">
+        <div class="label">Persona</div>
+        <div class="persona-name-large">${p.personaName}</div>
+        <div class="persona-role">${p.coreRole}</div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--art-border); border:1px solid var(--art-border);">
+        <div class="persona-card" style="border:none; margin:0;">
+          <div class="label">Primary value</div>
+          <div class="value">${p.primaryValue}</div>
+        </div>
+        <div class="persona-card" style="border:none; margin:0;">
+          <div class="label">Working style</div>
+          <div class="value" style="font-size:13px;">${p.workingStyle}</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="artifact-section-num" style="margin-bottom:8px;">Best for</div>
+        <div class="tag-grid">${bestForHtml}</div>
+        <div class="artifact-section-num" style="margin-bottom:8px; margin-top:12px;">Not for</div>
+        <div class="tag-grid">${notForHtml}</div>
+      </div>
+    </div>
+
+    <div class="artifact-section">
+      <div class="artifact-section-num">§ 03</div>
+      <div class="artifact-section-title">What it helps you do</div>
+      <ul class="artifact-list">${useCasesHtml}</ul>
+    </div>
+
+    <div class="artifact-section">
+      <div class="artifact-section-num">§ 04</div>
+      <div class="artifact-section-title">How to work with it</div>
+      <div class="artifact-body">
+        <p>${p.workingInstructions}</p>
+        <p style="margin-top:14px; padding:14px 18px; background:var(--art-surface); border-left:3px solid var(--art-accent); font-family:'Cormorant Garamond',serif; font-style:italic; font-size:16px; color:var(--art-text);">
+          "Here's the situation, here's what I'm trying to do, here are the constraints, and here's where I'm stuck. Help me think this through."
+        </p>
+        <p style="font-size:12px; color:var(--art-muted); margin-top:8px;">Base prompt pattern — adapt to any situation</p>
+      </div>
+    </div>
+
+    <div class="artifact-section">
+      <div class="artifact-section-num">§ 05</div>
+      <div class="artifact-section-title">Adaptive modes</div>
+      <div class="artifact-body" style="margin-bottom:16px; font-size:13px; color:var(--art-muted);">This persona shifts behavior automatically based on context. You do not need to invoke modes explicitly — it recognizes when each is useful.</div>
+      <div style="border:1px solid var(--art-border);">
+        <div class="mode-row" style="background:var(--art-surface); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--art-muted);">
+          <div class="mode-cell">Mode</div>
+          <div class="mode-cell">When it activates</div>
+          <div class="mode-cell">What it does</div>
+        </div>
+        ${modesHtml}
+      </div>
+    </div>
+
+    <div class="artifact-section">
+      <div class="artifact-section-num">§ 06</div>
+      <div class="artifact-section-title">Starter prompts</div>
+      <div class="artifact-body" style="margin-bottom:14px; font-size:13px; color:var(--art-muted);">Copy and adapt these for your real situations. Each is complete and ready to use.</div>
+      ${promptsHtml}
+    </div>
+
+    <div class="artifact-section">
+      <div class="artifact-section-num">§ 07</div>
+      <div class="artifact-section-title">Example scenarios</div>
+      <ul class="artifact-list">${examplesHtml}</ul>
+    </div>
+
+    <div class="artifact-section">
+      <div class="artifact-section-num">§ 08</div>
+      <div class="artifact-section-title">What this could unlock</div>
+      <ul class="artifact-list">${unlocksHtml}</ul>
+    </div>
+
+    <div class="artifact-section">
+      <div class="artifact-section-num">§ 09</div>
+      <div class="artifact-section-title">Ready-to-deploy system prompt</div>
+      <div class="artifact-body" style="margin-bottom:16px; font-size:13px; color:var(--art-muted);">Copy this entire block into Claude, ChatGPT, or any model's system/custom instructions field. This is your persona, fully configured.</div>
+      <div class="system-prompt-block">
+        <div class="system-prompt-label">System prompt — paste directly into your AI tool</div>
+        <pre id="systemPromptText">${p.systemPrompt}</pre>
+        <button class="prompt-copy-btn" style="margin-top:12px; font-size:11px; padding:6px 12px; border:1px solid #2a2218;" onclick="copyText(document.getElementById('systemPromptText').textContent)">Copy system prompt</button>
+      </div>
+    </div>
+
+    <div class="artifact-section">
+      <div class="artifact-section-num">§ 10</div>
+      <div class="artifact-section-title">What this may be worth</div>
+      <div class="artifact-body" style="margin-bottom:14px;">Depending on how it is used, this persona may reduce your reliance on:</div>
+      <div class="equiv-cards-grid">
+        ${valEquivHtml}
+      </div>
+      <div class="artifact-body" style="margin-top:16px; font-size:13px; color:var(--art-muted); line-height:1.65;">
+        The value depends less on what it cost to generate and more on what it helps you do. That is the logic behind how pricing is structured.
+      </div>
+    </div>
+
+    <div class="closing-block">
+      <div class="artifact-section-num" style="color:var(--art-faint); margin-bottom:12px;">A note</div>
+      <div class="closing-text">${p.closingNote}</div>
+    </div>
+  `;
+
+  // scroll to top
+  document.getElementById('artifactScroll').scrollTop = 0;
+}
+
+/* ═══════════════════════════════════════════
+   VALUE
+═══════════════════════════════════════════ */
+function renderValue() {
+  const p = state.persona;
+  const valEquivHtml = (p?.valueEquivalents || []).map(v => {
+    if (typeof v === 'object' && v.role) {
+      return `<div class="equiv-card"><div class="equiv-role">${v.role}</div><div class="equiv-rate">${v.rate}</div><div class="equiv-context">${v.context}</div></div>`;
+    }
+    return `<div class="equiv-card"><div class="equiv-role">${v}</div></div>`;
+  }).join('');
+
+  document.getElementById('valueContent').innerHTML = `
+    <div class="animate-1">
+      <div class="eyebrow eyebrow-accent" style="margin-bottom:14px;">Before you decide</div>
+      <h2 class="value-headline">What this might<br>be worth</h2>
+      <p class="value-sub">The guide is yours regardless of what you choose next. This section exists to help you think through its value — not to anchor you to a number.</p>
+    </div>
+    <div class="value-lenses animate-2">
+      <div class="value-lens">
+        <div class="lens-num">01 — Market equivalent</div>
+        <div class="lens-title">Comparable support</div>
+        <div class="lens-body">
+          The kind of thinking support this persona provides — strategic synthesis, decision frameworks, situation analysis — is typically sourced from consultants ($150–$400/hr), coaches ($200–$500/session), or researchers ($50–$150/hr).<br><br>
+          This persona doesn't replace any of those fully. But it may reduce how often you need them.
+        </div>
+        <div class="equiv-cards-grid">${valEquivHtml}</div>
+      </div>
+      <div class="value-lens">
+        <div class="lens-num">02 — Creation cost</div>
+        <div class="lens-title">Transparency</div>
+        <div class="lens-body">
+          The compute cost to generate this persona was under $1. We're telling you that on purpose.<br><br>
+          The price you choose is not paying for compute. It's a contribution to making this kind of tool available more broadly — and to the time, craft, and infrastructure that shapes the experience.
+        </div>
+      </div>
+      <div class="value-lens">
+        <div class="lens-num">03 — Practical leverage</div>
+        <div class="lens-title">The real question</div>
+        <div class="lens-body">
+          If this persona helps you perform work that would otherwise require outside support — or helps you think more clearly, decide faster, or produce stronger output — what is that worth to you over the next 30 days?<br><br>
+          That is the number that matters.
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;" class="animate-3">
+      <button class="btn-primary" onclick="renderPricing(); goTo('pricing');">
+        Choose your path
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="btn-ghost" onclick="renderArtifact(); goTo('artifact');">← Back to guide</button>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════
+   PRICING
+═══════════════════════════════════════════ */
+function renderPricing() {
+  document.getElementById('pricingContent').innerHTML = `
+    <div class="animate-1">
+      <div class="eyebrow eyebrow-accent" style="margin-bottom:14px;">Solidarity pricing</div>
+      <h2 class="pricing-headline">Choose what<br>it's worth</h2>
+      <p class="pricing-sub">You already have the guide. This is not a gate. It's an invitation to participate in a pricing model built on transparency and fairness — not pressure.</p>
+    </div>
+    <div class="pricing-grid animate-2">
+      <div class="pricing-card">
+        <div>
+          <div class="pricing-card-label">Path A</div>
+          <div class="pricing-card-name">Flat rate</div>
+        </div>
+        <div class="pricing-card-body">For people who want simplicity and clarity. No math. No decisions about what it's worth. Just a clean transaction.</div>
+        <div class="pricing-card-price">$75 <span>flat</span></div>
+        <button class="btn-primary" style="width:100%; justify-content:center;" onclick="selectPath('flat', 75)">Choose flat rate</button>
+      </div>
+      <div class="pricing-card" style="border-top: 2px solid var(--accent);">
+        <div>
+          <div class="pricing-card-label">Path B — Recommended</div>
+          <div class="pricing-card-name">Value-based</div>
+        </div>
+        <div class="pricing-card-body">If this persona helps you perform work worth X over the next month, contribute a fraction of that. You decide both the value and the fraction.</div>
+        <div>
+          <input type="number" class="pricing-input" id="valueAmount" placeholder="$" min="1" style="width:100%;">
+          <div style="font-size:11px; color:var(--text-dim); margin-top:6px; font-family:'JetBrains Mono',monospace;">Enter what you think it's worth</div>
+        </div>
+        <button class="btn-primary" style="width:100%; justify-content:center;" onclick="selectValueBased()">Choose value-based</button>
+      </div>
+      <div class="pricing-card">
+        <div>
+          <div class="pricing-card-label">Path C</div>
+          <div class="pricing-card-name">Pay what you can</div>
+        </div>
+        <div class="pricing-card-body">If cost is a real barrier, this path exists for you. Not charity — participation. Something real, even if it's small. No minimum.</div>
+        <div>
+          <input type="number" class="pricing-input" id="pwycAmount" placeholder="$" min="0" style="width:100%;">
+          <div style="font-size:11px; color:var(--text-dim); margin-top:6px; font-family:'JetBrains Mono',monospace;">Name your amount</div>
+        </div>
+        <button class="btn-outline" style="width:100%; justify-content:center;" onclick="selectPwyc()">Choose PWYC</button>
+      </div>
+    </div>
+    <p class="pricing-footer-note animate-3">
+      Payments are processed via Stripe. All three paths receive the same artifact. Each is a legitimate choice.
+      If you're not ready to decide, the guide is yours regardless.
+    </p>
+    <div style="display:flex; justify-content:center; margin-top:20px;" class="animate-4">
+      <button class="btn-ghost" onclick="goTo('value')">← Back to value framing</button>
+    </div>
+  `;
+}
+
+function selectPath(type, amount) {
+  state.selectedPricing = { type, amount };
+  showConfirmation(type, amount);
+}
+function selectValueBased() {
+  const amount = parseFloat(document.getElementById('valueAmount').value);
+  if (!amount || amount < 1) { showToast('Enter an amount first'); return; }
+  selectPath('value-based', amount);
+}
+function selectPwyc() {
+  const amount = parseFloat(document.getElementById('pwycAmount').value);
+  if (amount === undefined || isNaN(amount)) { showToast('Enter an amount'); return; }
+  selectPath('pwyc', amount || 0);
+}
+
+function showConfirmation(type, amount) {
+  const label = type === 'flat' ? 'Flat Rate' : type === 'value-based' ? 'Value-Based' : 'Pay What You Can';
+  document.getElementById('pricingContent').innerHTML = `
+    <div class="animate-1" style="text-align:center; max-width:480px; margin:0 auto;">
+      <div class="eyebrow eyebrow-accent" style="margin-bottom:20px;">Path selected</div>
+      <div style="font-family:'Cormorant Garamond',serif; font-size:72px; font-weight:300; color:var(--text); line-height:1; margin-bottom:8px;">$${amount}</div>
+      <div style="font-size:14px; color:var(--text-muted); margin-bottom:36px;">${label}</div>
+      <div class="rule-full"></div>
+      <p style="font-size:14px; color:var(--text-muted); line-height:1.65; margin-bottom:32px;">
+        Thank you. In a fully built version, this is where Stripe would complete the transaction. 
+        For now, your persona is yours to keep — the guide is already in your hands.
+      </p>
+      <div style="display:flex; flex-direction:column; gap:12px; align-items:center;">
+        <button class="btn-primary" onclick="renderArtifact(); goTo('artifact');">
+          Return to your guide
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="btn-ghost" onclick="renderPricing(); goTo('pricing');">← Change selection</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════
+   UTILITY
+═══════════════════════════════════════════ */
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => showToast('Copied'));
+}
+
+function copyArtifact() {
+  const p = state.persona;
+  if (!p) return;
+  const text = `BREAKTHRU — OPERATING GUIDE
+${p.personaName}
+${p.tagline}
+
+CORE ROLE
+${p.coreRole}
+
+PRIMARY VALUE
+${p.primaryValue}
+
+WORKING STYLE
+${p.workingStyle}
+
+BEST FOR
+${p.bestFor.join('\n')}
+
+NOT FOR
+${p.notFor.join('\n')}
+
+USE CASES
+${p.useCases.join('\n')}
+
+HOW TO WORK WITH IT
+${p.workingInstructions}
+
+MODES
+${p.modes.map(m => `${m.name}: ${m.when} → ${m.does}`).join('\n')}
+
+STARTER PROMPTS
+${p.starterPrompts.join('\n')}
+
+EXAMPLES
+${p.tailoredExamples.join('\n')}
+
+WHAT THIS UNLOCKS
+${p.unlocks.join('\n')}
+
+SYSTEM PROMPT
+${p.systemPrompt}`;
+
+  navigator.clipboard.writeText(text).then(() => showToast('Guide copied to clipboard'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ═══════════════════════════════════════════
+   HOOKS: render value & pricing when navigating
+═══════════════════════════════════════════ */
+const originalGoTo = goTo;
+window.goTo = function(phase) {
+  if (phase === 'value' && state.persona) renderValue();
+  if (phase === 'pricing') renderPricing();
+
+  // handle artifact actions bar
+  const actionsBar = document.querySelector('.artifact-actions');
+  const mark = document.getElementById('brand-mark');
+
+  if (phase === 'artifact') {
+    setTimeout(() => actionsBar.classList.add('visible'), 600);
+    mark.style.opacity = '0';
+    mark.style.pointerEvents = 'none';
+  } else {
+    actionsBar.classList.remove('visible');
+    mark.style.opacity = '1';
+    mark.style.pointerEvents = '';
+  }
+
+  originalGoTo(phase);
+};
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+// keyboard shortcut: Escape to go back (useful during builder)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.phase === 'builder' && state.builderStep > 0) {
+    prevBuilderStep();
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+body {
+	overflow:hidden;
+	background-color:#333;
+}
+
+p {
+	color:#ddd;
+}
+
+a {
+	color:#87876e;
+}
+
+a:visited {
+	color:#87876e;
+}
+
+span {
+	white-space:nowrap;
+}
+
+#main-bio {
+	width:200px;
+	text-align:justify;
+	margin:60px;
+}
+
+#main-music {
+	position:absolute;
+	top:20vh;
+	left:80vw;
+}
+
+#main-sacredblue {
+	position:absolute;
+	top:22vh;
+	left:85vw;
+}
+
+#main-writing {
+	position:absolute;
+	top:79vh;
+	left:40vw;
+}
+
+#main-myriadet {
+	position:absolute;
+	top:84vh;
+	left:38vw;
+}
+
+#main-odours {
+	position:absolute;
+	top:88vh;
+	left:36vw;
+}
+
+#main-fandango {
+	position:absolute;
+	top:87vh;
+	left:42vw;
+}
+
+#main-concerts {
+	position:absolute;
+	top:31vh;
+	left:19vw;
+}
+
+#main-swans {
+	position:absolute;
+	top:34vh;
+	left:26vw;
+}
+
+#main-tnp {
+	position:absolute;
+	top:38vh;
+	left:23vw;
+}
+
+#main-kiran {
+	position:absolute;
+	top:41vh;
+	left:24vw;
+}
+
+#writing-body {
+	position:absolute;
+	top:20vh;
+	left:20vw;
+	max-width:60vw;
+	padding-bottom:20vh;
+	color:#ddd;
+}
+
+#downbox {
+	position:absolute;
+	top:10vh;
+	left:20vw;
+	margin:auto;
+	height:80vh;
+	width:100%;
+}
+
+#downbox a {
+	display:block;
+	height:70vh;
+	width:auto;
+	margin:2em;
+}
+
+#down img {
+	position:absolute;
+	height:70vh;
+	width:auto;
+}
+
+#down-main {
+	z-index:23;
+}
+
+#down:hover > #down-main {
+	opacity:0;
+}
+
+#downbox p {
+	display:block;
+	z-index:31;
+	padding:0;
+}
+
+#shootingstar {
+	position:absolute;
+	height:130vh;
+	width:auto;
+	margin:0;
+	top:-10vh;
+	right:90vh;
+	opacity:0.5;
+	filter:blur(1px);
+	transition:1s;
+}
+
+#albumbox {
+	position:absolute;
+	height:90vh;
+	width:70vh;
+	margin:0;
+	right:15vh;
+	top:5vh;
+	transition:1s;
+}
+
+#albumbox img {
+	width:80vh;
+	height:40vh;
+	margin-left:-2vh;
+	/* border:2px solid black;*/
+	border-radius:0.8em;
+}
+
+#albumbox span {
+	color:#87876e;
+}
+
+p#sacredstripe {
+    background-color:#0437F2;
+    width:200vw;
+    padding:5px;
+    margin-left:-100vw;
+    padding-left:100vw;
+}
+
+@media screen and (orientation:portrait) {
+
+	#shootingstar {
+		right:-25vw;
+		opacity:0.3;
+		overflow:none;
+	}
+	
+	#albumbox {
+		width:90vw;
+		height:auto;
+		left:5vw;
+		top:5vw;
+	}
+
+	#albumbox img {
+		width:90vw;
+		height:45vw;
+		margin-left:0;
+	}
+
+}

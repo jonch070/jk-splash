@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Apiary Network</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { background: #03050a; overflow: hidden; font-family: 'EB Garamond', Georgia, serif; touch-action: none; }
+  canvas { display: block; }
+
+  #legend {
+    position: fixed; bottom: clamp(14px,3vw,28px); left: clamp(14px,3vw,28px);
+    color: rgba(190, 162, 105, 0.5);
+    font-size: clamp(10px, 2.2vw, 12px);
+    letter-spacing: 0.06em; line-height: 2;
+    pointer-events: none; user-select: none;
+  }
+  #legend .title {
+    font-size: clamp(11px, 2.8vw, 15px); font-weight: 500;
+    color: rgba(210, 180, 115, 0.75);
+    letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 10px;
+  }
+  #legend .subtitle {
+    font-style: italic; font-size: clamp(9px,2vw,11px);
+    color: rgba(170, 145, 90, 0.4); margin-bottom: 12px; letter-spacing: 0.04em;
+  }
+  #legend .row { display: flex; align-items: center; gap: 10px; }
+  #legend .swatch { flex-shrink: 0; width: 18px; height: 3px; border-radius: 2px; }
+  #legend .dot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; }
+  /* Hide legend detail on small screens */
+  @media (max-width: 480px) {
+    #legend .subtitle, #legend .row { display: none; }
+    #legend .title { margin-bottom: 0; }
+  }
+
+  #phase-key {
+    position: fixed; bottom: clamp(14px,3vw,28px); right: clamp(14px,3vw,28px);
+    color: rgba(190, 162, 105, 0.45); font-size: clamp(9px,2vw,11px);
+    letter-spacing: 0.07em; line-height: 2;
+    pointer-events: none; text-align: right;
+  }
+  #phase-key .ph-title {
+    color: rgba(210, 180, 115, 0.6); margin-bottom: 6px;
+    letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  @media (max-width: 480px) { #phase-key { display: none; } }
+
+  #hint {
+    position: fixed; top: clamp(14px,3vw,28px); right: clamp(14px,3vw,28px);
+    color: rgba(190, 162, 105, 0.3); font-size: clamp(9px,2vw,11px);
+    font-style: italic; letter-spacing: 0.05em; pointer-events: none;
+  }
+
+  /* CTA overlay — fades in after ~90 seconds */
+  #cta {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+    display: flex; justify-content: center; align-items: flex-end;
+    padding: clamp(20px,4vw,40px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 3s ease;
+  }
+  #cta.visible { opacity: 1; pointer-events: auto; }
+  #cta-inner {
+    display: flex; align-items: center; gap: clamp(12px,3vw,28px);
+    flex-wrap: wrap; justify-content: center;
+  }
+  #cta-stay {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-style: italic; font-size: clamp(13px,2.8vw,16px);
+    color: rgba(170, 145, 90, 0.38); letter-spacing: 0.04em;
+    cursor: pointer; transition: color 0.3s;
+    background: none; border: none; padding: 8px;
+  }
+  #cta-stay:hover { color: rgba(190, 162, 105, 0.6); }
+  #cta-divider {
+    width: 1px; height: 20px;
+    background: rgba(170, 145, 90, 0.2);
+  }
+  #cta-forward {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(9px,2vw,10px); letter-spacing: 0.22em; text-transform: uppercase;
+    color: rgba(185, 155, 75, 0.65); background: transparent;
+    border: 1px solid rgba(185, 155, 75, 0.28);
+    padding: clamp(10px,2.5vw,13px) clamp(20px,4vw,32px);
+    cursor: pointer; transition: all 0.3s ease;
+  }
+  #cta-forward:hover, #cta-forward:active {
+    color: rgba(215, 185, 95, 1);
+    border-color: rgba(215, 185, 95, 0.55);
+    background: rgba(185, 155, 75, 0.07);
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="legend">
+  <div class="title">The Apiary Network</div>
+  <div class="subtitle">A simulation of solidarity economics as biology</div>
+  <div class="row">
+    <div class="dot" style="background: rgba(90,155,90,0.65)"></div>
+    <span>Spores — people drifting, finding each other</span>
+  </div>
+  <div class="row">
+    <div class="dot" style="background: #b88c30; width:9px; height:9px"></div>
+    <span>Nodes — collaborative projects forming</span>
+  </div>
+  <div class="row">
+    <div class="dot" style="background: rgba(80,185,80,0.75)"></div>
+    <span>Hyphae — outreach, searching</span>
+  </div>
+  <div class="row">
+    <div class="swatch" style="background: rgba(185,148,60,0.7)"></div>
+    <span>Threads — established connections</span>
+  </div>
+  <div class="row">
+    <div class="dot" style="background: #b0dff0"></div>
+    <span>Motes — resources in bidirectional flow</span>
+  </div>
+</div>
+
+<div id="phase-key">
+  <div class="ph-title">Node phases</div>
+  <div>○ Search — emitting hyphae</div>
+  <div>◉ Expand — networked, reaching further</div>
+</div>
+
+<div id="hint">tap to seed · right-click to rupture</div>
+
+<div id="cta">
+  <div id="cta-inner">
+    <button id="cta-stay" onclick="dismissCta()">stay a while longer</button>
+    <div id="cta-divider"></div>
+    <button id="cta-forward" onclick="goForward()">I'm ready →</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W = canvas.width  = window.innerWidth;
+let H = canvas.height = window.innerHeight;
+
+const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+window.addEventListener('resize', () => {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  GW = Math.ceil(W / GRID_RES);
+  GH = Math.ceil(H / GRID_RES);
+  pheromoneGrid = new Float32Array(GW * GH);
+});
+
+// ── Pheromone grid ──────────────────────────────────────────
+const GRID_RES = 5;
+let GW = Math.ceil(W / GRID_RES);
+let GH = Math.ceil(H / GRID_RES);
+let pheromoneGrid = new Float32Array(GW * GH);
+function getPheromone(x, y) {
+  const gx = Math.floor(x / GRID_RES) | 0;
+  const gy = Math.floor(y / GRID_RES) | 0;
+  if (gx < 0 || gx >= GW || gy < 0 || gy >= GH) return 0;
+  return pheromoneGrid[gy * GW + gx];
+}
+function addPheromone(x, y, v) {
+  const gx = Math.floor(x / GRID_RES) | 0;
+  const gy = Math.floor(y / GRID_RES) | 0;
+  if (gx < 0 || gx >= GW || gy < 0 || gy >= GH) return;
+  const i = gy * GW + gx;
+  pheromoneGrid[i] = Math.min(1, pheromoneGrid[i] + v);
+}
+function decayPheromone() {
+  for (let i = 0; i < pheromoneGrid.length; i++) pheromoneGrid[i] *= 0.9975;
+}
+
+// ── Constants ──────────────────────────────────────────────
+const MAX_SPORES         = 110;
+const TOTAL_SPORE_BUDGET = 180;    // finite pool — edge spawning stops when exhausted
+const SPAWN_INTERVAL     = 22;     // slower initial arrival — scarcity from the start
+const MERGE_RADIUS       = 13;
+const NODE_THRESHOLD     = 3.5;
+const HYPHA_SPEED        = 1.25;
+const HYPHA_MAX_AGE      = 580;
+const SENSOR_DIST        = 16;
+const SENSOR_ANGLE       = Math.PI / 4.2;
+const TOUCH_RADIUS       = 30;
+const PHEROMONE_STR      = 0.22;
+const MOTE_BASE_SPEED    = 0.0038;
+const MOTE_MASS_TRANSFER = 0.0004; // mass transferred per mote pass — real resource flow
+const PATH_INTERVAL      = 4;
+
+// Decay & regeneration
+const NODE_DECAY_RATE    = 0.00008;
+const NODE_MIN_MASS      = 0.8;
+const REGEN_INTERVAL     = 280;
+const REGEN_PER_THREAD   = 0.18;
+
+// Turbulence — random node death events
+const TURBULENCE_INTERVAL   = 280;   // frames between turbulence checks — much more frequent
+const TURBULENCE_CHANCE     = 0.55;  // higher probability per check
+const THREAD_FADE_DURATION  = 110;
+const URGENT_EMIT_DURATION  = 320;
+
+// Pulse (click intention)
+const PULSE_MAX_R        = 180;     // how far the wave expands
+const PULSE_ATTRACT_G    = 0.09;    // pull force on spores within wave front
+const PULSE_ATTRACT_BAND = 55;      // width of the attractive band around wave front
+
+// Veteran spore behaviour after rupture
+const VETERAN_WANDER_FRAMES = 180;  // meander freely before seeking a target
+const VETERAN_MAX_FRAMES    = 600;  // if still drifting after this, commit to new node
+
+// Gravity tuning
+const SPORE_G            = 0.00018;
+const CURSOR_MASS        = 38;
+const CURSOR_G           = 0.00032;
+const NODE_G             = 0.00009;
+const NODE_ATTRACT_RANGE = 280;
+
+// Node breathing room — repulsion between locked nodes so they spread out
+const NODE_REPEL_DIST    = 160;
+const NODE_REPEL_G       = 0.018;
+
+// Legibility — no node forms if another is within this distance
+const MIN_NODE_DIST      = 120;
+
+// Rupture — right-click annihilation
+const RUPTURE_RADIUS     = 220;          // wide destruction
+const RUPTURE_COOLDOWN   = 1400;         // frames before new nodes allowed back
+const RUPTURE_VET_MAX    = 240;          // veterans after rupture have half the time — urgency
+
+// ── State ──────────────────────────────────────────────────
+let spores  = [];
+let nodes   = [];
+let hyphae  = [];
+let threads = [];
+let motes   = [];
+let echoes  = [];  // dissolving node remnants — name + position lingers briefly
+let pulses  = [];  // click intentions — expanding rings that attract spores
+let shockwaves = []; // death blasts — sharp outward ring
+let burnZones  = []; // annihilated areas — node formation blocked during cooldown
+let frame   = 0;
+let nextSpawn    = 0;
+let sporesSpawned = 0;
+let nodeIdCounter = 0;
+let nextRegen    = REGEN_INTERVAL;
+let nextTurbulence = TURBULENCE_INTERVAL * 3;  // small initial grace period
+
+// Cursor tracking
+const cursor = { x: W / 2, y: H / 2, active: isTouch }; // on touch, always active at center to start
+
+// ── Utilities ──────────────────────────────────────────────
+function dist2(a, b) { return (a.x-b.x)**2 + (a.y-b.y)**2; }
+function dist(a, b)  { return Math.sqrt(dist2(a, b)); }
+function connected(a, b) { return a.connections.has(b.id); }
+
+// ── Spore system ───────────────────────────────────────────
+function makeSpore(x, y, vx, vy) {
+  return {
+    x:  x  ?? Math.random() * W,
+    y:  y  ?? Math.random() * H,
+    vx: vx ?? (Math.random() - 0.5) * 0.35,
+    vy: vy ?? (Math.random() - 0.5) * 0.35,
+    mass: 1
+  };
+}
+
+// Track right-click so the click event doesn't also fire seedCluster
+let lastRightClick = 0;
+
+function seedCluster(cx, cy, count = 6) {
+  for (let i = 0; i < count; i++) {
+    spores.push(makeSpore(
+      cx + (Math.random()-0.5) * 160,   // wider spread — takes longer to find each other
+      cy + (Math.random()-0.5) * 160,
+      (Math.random()-0.5) * 0.5,
+      (Math.random()-0.5) * 0.5
+    ));
+  }
+}
+
+function updateSpores() {
+  // Edge spawning stops once the total budget is exhausted
+  if (frame >= nextSpawn && spores.length < MAX_SPORES && sporesSpawned < TOTAL_SPORE_BUDGET) {
+    if (Math.random() < 0.35) {
+      const side = Math.floor(Math.random() * 4);
+      if (side === 0) spores.push(makeSpore(Math.random()*W, 5));
+      else if (side === 1) spores.push(makeSpore(W-5, Math.random()*H));
+      else if (side === 2) spores.push(makeSpore(Math.random()*W, H-5));
+      else               spores.push(makeSpore(5, Math.random()*H));
+    } else {
+      spores.push(makeSpore());
+    }
+    sporesSpawned++;
+    nextSpawn = frame + SPAWN_INTERVAL;
+  }
+
+  // Pairwise attraction between spores (reduced — slow discovery)
+  for (let i = 0; i < spores.length; i++) {
+    const s = spores[i];
+
+    if (s.veteran) {
+      const age = frame - s.seekBorn;
+
+      if (age < VETERAN_WANDER_FRAMES) {
+        // Phase 1: Meander — fly outward, drift, get some distance
+        s.vx *= 0.968;
+        s.vy *= 0.968;
+        s.vx += (Math.random() - 0.5) * 0.06;
+        s.vy += (Math.random() - 0.5) * 0.06;
+
+      } else if (age < (s.vetMaxFrames || VETERAN_MAX_FRAMES)) {
+        // Phase 2: Seek a random living node — not the closest, a chosen one
+        if (!s.vetTarget || !s.vetTarget.alive) {
+          const candidates = nodes.filter(n => n.alive !== false);
+          if (candidates.length > 0) {
+            const expandNodes = candidates.filter(n => n.phase === 'expand');
+            const pool = expandNodes.length > 0 && Math.random() < 0.65
+              ? expandNodes
+              : candidates;
+            s.vetTarget = pool[Math.floor(Math.random() * pool.length)];
+          }
+        }
+        // Repick if target is inside a burn zone
+        if (s.vetTarget && burnZones.some(z =>
+          frame < z.expiresAt &&
+          Math.sqrt((z.x-s.vetTarget.x)**2+(z.y-s.vetTarget.y)**2) < z.r
+        )) {
+          s.vetTarget = null; // will repick next frame
+        }
+        s.vx *= 0.92;
+        s.vy *= 0.92;
+        if (s.vetTarget && s.vetTarget.alive) {
+          const dx = s.vetTarget.x - s.x;
+          const dy = s.vetTarget.y - s.y;
+          const d  = Math.sqrt(dx*dx + dy*dy);
+          if (d > 1) { s.vx += (dx/d) * 0.055; s.vy += (dy/d) * 0.055; }
+        }
+
+      } else {
+        // Phase 3: Wandered too long — commit to starting something new
+        s.vx *= 0.92;
+        s.vy *= 0.92;
+        if (Math.abs(s.vx) < 0.25 && Math.abs(s.vy) < 0.25
+            && Math.random() < (s.vetMaxFrames ? 0.022 : 0.008)
+            && canFormNode(s.x, s.y)) {
+          const newNode = {
+            id: nodeIdCounter++,
+            x: s.x, y: s.y,
+            mass: NODE_THRESHOLD,
+            phase: 'search',
+            connections: new Set(),
+            emitTimer: 0,
+            birthFrame: frame,
+            pulseOffset: Math.random() * Math.PI * 2,
+            label: null
+          };
+          assignLabel(newNode);
+          nodes.push(newNode);
+          pulses.push({ x: s.x, y: s.y, r: 0, life: 1.0, spontaneous: true });
+          spores.splice(i, 1);
+          i--;
+          continue;
+        }
+      }
+
+    } else if (s.seeking && frame - s.seekBorn > 60) {
+      // Regular seeking spores (blast from natural death)
+      s.vx *= 0.94;
+      s.vy *= 0.94;
+      for (const nd of nodes) {
+        const dx = nd.x - s.x, dy = nd.y - s.y;
+        const d2 = dx*dx + dy*dy;
+        if (d2 < 1 || d2 > 280*280) continue;
+        const d = Math.sqrt(d2);
+        const f = Math.min(0.00045 * nd.mass / d2, 0.04);
+        s.vx += (dx/d) * f;
+        s.vy += (dy/d) * f;
+      }
+    } else {
+      s.vx *= 0.982;
+      s.vy *= 0.982;
+    }
+
+    for (let j = i+1; j < spores.length; j++) {
+      const dx = spores[j].x - spores[i].x;
+      const dy = spores[j].y - spores[i].y;
+      const d2 = dx*dx + dy*dy;
+      if (d2 < 1) continue;
+      const d = Math.sqrt(d2);
+      const f = Math.min(SPORE_G * spores[i].mass * spores[j].mass / d2, 0.012);
+      spores[i].vx += (dx/d)*f / spores[i].mass;
+      spores[i].vy += (dy/d)*f / spores[i].mass;
+      spores[j].vx -= (dx/d)*f / spores[j].mass;
+      spores[j].vy -= (dy/d)*f / spores[j].mass;
+    }
+
+    // Cursor gravity
+    if (cursor.active) {
+      const dx = cursor.x - spores[i].x;
+      const dy = cursor.y - spores[i].y;
+      const d2 = dx*dx + dy*dy;
+      if (d2 > 100) {
+        const d  = Math.sqrt(d2);
+        const f  = Math.min(CURSOR_G * CURSOR_MASS * spores[i].mass / d2, 0.028);
+        spores[i].vx += (dx/d) * f / spores[i].mass;
+        spores[i].vy += (dy/d) * f / spores[i].mass;
+      }
+    }
+
+    // Node gravity — gentle pull toward nearby locked projects
+    for (const n of nodes) {
+      const dx = n.x - spores[i].x;
+      const dy = n.y - spores[i].y;
+      const d2 = dx*dx + dy*dy;
+      const d  = Math.sqrt(d2);
+      if (d < TOUCH_RADIUS || d > NODE_ATTRACT_RANGE) continue;
+      const f = Math.min(NODE_G * n.mass * spores[i].mass / d2, 0.018);
+      spores[i].vx += (dx/d) * f / spores[i].mass;
+      spores[i].vy += (dy/d) * f / spores[i].mass;
+    }
+
+    spores[i].vx *= 0.982;
+    spores[i].vy *= 0.982;
+    spores[i].x  += spores[i].vx;
+    spores[i].y  += spores[i].vy;
+    // Soft walls
+    if (spores[i].x < 8)   spores[i].vx += 0.08;
+    if (spores[i].x > W-8) spores[i].vx -= 0.08;
+    if (spores[i].y < 8)   spores[i].vy += 0.08;
+    if (spores[i].y > H-8) spores[i].vy -= 0.08;
+  }
+
+  // Merge + node formation
+  const dead = new Set();
+  for (let i = 0; i < spores.length; i++) {
+    if (dead.has(i)) continue;
+    for (let j = i+1; j < spores.length; j++) {
+      if (dead.has(j)) continue;
+      if (dist(spores[i], spores[j]) < MERGE_RADIUS) {
+        const m = spores[i].mass + spores[j].mass;
+        spores[i].x  = (spores[i].x*spores[i].mass  + spores[j].x*spores[j].mass)  / m;
+        spores[i].y  = (spores[i].y*spores[i].mass  + spores[j].y*spores[j].mass)  / m;
+        spores[i].vx = (spores[i].vx*spores[i].mass + spores[j].vx*spores[j].mass) / m;
+        spores[i].vy = (spores[i].vy*spores[i].mass + spores[j].vy*spores[j].mass) / m;
+        spores[i].mass = m;
+        // Veterans inherit the flag when merging
+        if (spores[j].veteran) spores[i].veteran = true;
+        dead.add(j);
+        const threshold = spores[i].veteran ? NODE_THRESHOLD * 0.7 : NODE_THRESHOLD;
+        if (spores[i].mass >= threshold && canFormNode(spores[i].x, spores[i].y)) {
+          const newNode = {
+            id: nodeIdCounter++,
+            x: spores[i].x, y: spores[i].y,
+            mass: spores[i].mass,
+            phase: 'search',
+            connections: new Set(),
+            emitTimer: Math.floor(Math.random() * 55),
+            birthFrame: frame,
+            pulseOffset: Math.random() * Math.PI * 2,
+            label: null
+          };
+          assignLabel(newNode);
+          nodes.push(newNode);
+          dead.add(i);
+          break;
+        }
+      }
+    }
+  }
+  if (dead.size) spores = spores.filter((_,i) => !dead.has(i));
+
+  // ── Spontaneous formation — rarely, a lone spore crystallises into a node on its own.
+  // Represents work already happening that we haven't found yet — someone, somewhere,
+  // already building. Low probability keeps it surprising rather than constant.
+  if (Math.random() < 0.0004 && spores.length > 0) {
+    const idx = Math.floor(Math.random() * spores.length);
+    const s   = spores[idx];
+    // Only happens to still spores — a drifter that has slowed down and committed
+    if (Math.abs(s.vx) < 0.18 && Math.abs(s.vy) < 0.18 && canFormNode(s.x, s.y)) {
+      const newNode = {
+        id: nodeIdCounter++,
+        x: s.x, y: s.y,
+        mass: NODE_THRESHOLD,
+        phase: 'search',
+        connections: new Set(),
+        emitTimer: 0,
+        birthFrame: frame,
+        pulseOffset: Math.random() * Math.PI * 2,
+        label: null
+      };
+      assignLabel(newNode);
+      nodes.push(newNode);
+      // Small pulse at birth — a signal that something just decided to exist
+      pulses.push({ x: s.x, y: s.y, r: 0, life: 1.0, spontaneous: true });
+      spores.splice(idx, 1);
+    }
+  }
+}
+
+// ── Node labels — real initiatives across ecology, economy, society, culture ──────
+const NODE_NAMES = {
+  search: [
+    // Forming — small, local, embryonic
+    'Repair Collective','Seed Exchange','Neighbourhood Kitchen','Tool Share',
+    'Community Land Project','Mutual Aid Network','Watershed Stewards','Time Exchange',
+    'Free Learning Space','Childcare Circle','Housing Co-op','Urban Food Forest',
+    'Bike Repair Hub','Skills Exchange','Mesh Commons','Open Makerspace',
+    'Grief & Transition Circle','Care Collective','Cultural Memory Archive','Land Restoration Crew'
+  ],
+  expand: [
+    // Networked — established, reaching further
+    'Worker-Owned Factory','Solidarity Food Network','Indigenous Land Stewardship',
+    'Community Energy Grid','Open Knowledge Commons','Cooperative Housing Network',
+    'Regenerative Farm Collective','Community Health Clinic','Worker Co-op Alliance',
+    'Bioregional Watershed Fund','Free & Open Education','Solidarity Economy Hub',
+    'Decentralised Media Network','Community Credit Union','Urban Agriculture Co-op',
+    'Care Economy Network','Restorative Justice Circle','Land Back Initiative',
+    'Community-Owned Internet','Ecosystem Restoration Trust','Cooperative Legal Clinic',
+    'Just Transition Fund','Cultural Sovereignty Project','Food Sovereignty Network',
+    'Indigenous Language Revitalization','Community Wealth Building','Participatory Budget Network',
+    'Platform Worker Co-op','Climate Adaptation Commons','Reparations Land Fund',
+    'Elder & Youth Exchange'
+  ]
+};
+
+// Stable label assigned at birth — persists for node lifetime
+let labelCounter = 0;
+function assignLabel(n) {
+  const pool = NODE_NAMES[n.phase] || NODE_NAMES.search;
+  n.label = pool[labelCounter % pool.length];
+  labelCounter++;
+}
+// ── Can a new node form here? Checks legibility + burn zone cooldown
+function canFormNode(x, y) {
+  // Too close to an existing node — legibility would break
+  for (const n of nodes) {
+    if (Math.sqrt((n.x-x)**2 + (n.y-y)**2) < MIN_NODE_DIST) return false;
+  }
+  // Inside an active burn zone — annihilated ground
+  for (const z of burnZones) {
+    if (frame < z.expiresAt && Math.sqrt((z.x-x)**2 + (z.y-y)**2) < z.r) return false;
+  }
+  return true;
+}
+
+// killNode: full cascade — blast, shockwave, seeking spores, thread fade, survivor alert
+function killNode(n) {
+  n.alive = false;
+
+  // ── Shockwave ring — sharp outward burst at death point
+  shockwaves.push({ x: n.x, y: n.y, r: 0, life: 1.0, maxR: 90 + n.mass * 2 });
+
+  // ── Blast spores — many, fast, in all directions
+  // Mass of the node determines how many blast outward
+  const blastCount = 6 + Math.floor(n.mass * 0.8);
+  for (let s = 0; s < blastCount; s++) {
+    const a    = (s / blastCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+    const speed = 1.2 + Math.random() * 2.8;  // fast initial velocity
+    spores.push({
+      x: n.x + Math.cos(a) * 8,
+      y: n.y + Math.sin(a) * 8,
+      vx: Math.cos(a) * speed,
+      vy: Math.sin(a) * speed,
+      mass: 1,
+      seeking: true,    // these spores actively seek nodes and other spores
+      seekBorn: frame   // used to delay seeking — let them fly first
+    });
+  }
+
+  // Echo
+  if (n.label) {
+    echoes.push({
+      x: n.x, y: n.y, label: n.label,
+      life: 1.0, decay: 0.0008 + Math.random() * 0.0006
+    });
+  }
+
+  // Kill owned hyphae
+  for (const h of hyphae) { if (h.owner === n) h.alive = false; }
+
+  // Fade connected threads, alert survivors
+  for (const t of threads) {
+    if (t.from === n || t.to === n) {
+      t.fading = true; t.fadeLife = 1.0;
+      const survivor = t.from === n ? t.to : t.from;
+      survivor.connections.delete(n.id);
+      survivor.emitTimer = 0;
+      survivor.urgentUntil = frame + URGENT_EMIT_DURATION;
+    }
+  }
+}
+
+function updateNodes() {
+  // ── Node breathing room — push nodes apart so labels are legible
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const dx = nodes[i].x - nodes[j].x;
+      const dy = nodes[i].y - nodes[j].y;
+      const d2 = dx*dx + dy*dy;
+      if (d2 < 1 || d2 > NODE_REPEL_DIST * NODE_REPEL_DIST) continue;
+      const d  = Math.sqrt(d2);
+      const f  = NODE_REPEL_G * (1 - d / NODE_REPEL_DIST) / d;
+      const fx = dx * f, fy = dy * f;
+      nodes[i].x += fx; nodes[i].y += fy;
+      nodes[j].x -= fx; nodes[j].y -= fy;
+      // Keep within canvas
+      nodes[i].x = Math.max(10, Math.min(W-10, nodes[i].x));
+      nodes[i].y = Math.max(10, Math.min(H-10, nodes[i].y));
+      nodes[j].x = Math.max(10, Math.min(W-10, nodes[j].x));
+      nodes[j].y = Math.max(10, Math.min(H-10, nodes[j].y));
+    }
+  }
+
+  for (const n of nodes) {
+    const prevPhase = n.phase;
+    n.phase = n.connections.size >= 2 ? 'expand' : 'search';
+    if (n.phase === 'expand' && prevPhase === 'search') assignLabel(n);
+
+    // Isolated decay
+    if (n.connections.size === 0) {
+      n.mass -= NODE_DECAY_RATE * n.mass;
+      if (n.mass < NODE_MIN_MASS) { killNode(n); continue; }
+    }
+
+    // Urgent nodes (just lost a connection) emit faster and in greater numbers
+    const isUrgent  = n.urgentUntil && frame < n.urgentUntil;
+    const interval  = isUrgent ? 12 : (n.phase === 'expand' ? 22 : 52);
+    const maxHyphae = isUrgent ? 8  : (n.phase === 'expand' ? 6  : 4);
+    const ownHyphae = hyphae.filter(h => h.owner === n).length;
+
+    n.emitTimer++;
+    if (n.emitTimer >= interval && ownHyphae < maxHyphae) {
+      const angle = Math.random() * Math.PI * 2;
+      hyphae.push({ x: n.x, y: n.y, angle, path: [{x: n.x, y: n.y}], owner: n, alive: true, age: 0 });
+      n.emitTimer = 0;
+    }
+  }
+
+  nodes = nodes.filter(n => n.alive !== false);
+
+  // Echoes
+  for (const e of echoes) e.life -= e.decay;
+  echoes = echoes.filter(e => e.life > 0);
+
+  // Network regeneration
+  if (frame >= nextRegen) {
+    nextRegen = frame + REGEN_INTERVAL;
+    let spawned = 0;
+    for (const t of threads) {
+      if (!t.fading && Math.random() < REGEN_PER_THREAD) {
+        const src = Math.random() < 0.5 ? t.from : t.to;
+        const angle = Math.random() * Math.PI * 2;
+        const d = 30 + Math.random() * 60;
+        spores.push(makeSpore(
+          src.x + Math.cos(angle) * d,
+          src.y + Math.sin(angle) * d,
+          (Math.random()-0.5) * 0.4, (Math.random()-0.5) * 0.4
+        ));
+        sporesSpawned++;
+        if (++spawned >= 6) break;
+      }
+    }
+  }
+
+  // Turbulence — randomly kills a connected node, forces reorganisation
+  if (frame >= nextTurbulence) {
+    nextTurbulence = frame + TURBULENCE_INTERVAL + Math.floor(Math.random() * 300);
+    if (Math.random() < TURBULENCE_CHANCE) {
+      const candidates = nodes.filter(n => n.phase === 'expand' && n.connections.size > 0);
+      if (candidates.length > 0) {
+        killNode(candidates[Math.floor(Math.random() * candidates.length)]);
+      }
+    }
+  }
+}
+
+// ── Hypha system (3-sensor Physarum steering) ──────────────
+function updateHyphae() {
+  for (const h of hyphae) {
+    if (!h.alive) continue;
+    h.age++;
+    if (h.age > HYPHA_MAX_AGE) { h.alive = false; continue; }
+
+    // Nearest other node
+    let nearest = null, nearestD = Infinity;
+    for (const n of nodes) {
+      if (n === h.owner) continue;
+      const d = dist(h, n);
+      if (d < nearestD) { nearest = n; nearestD = d; }
+    }
+
+    // Touch test
+    if (nearest && nearestD < TOUCH_RADIUS) {
+      if (!connected(h.owner, nearest)) {
+        const path = [...h.path, {x: nearest.x, y: nearest.y}];
+        const t = {
+          id: threads.length,
+          from: h.owner, to: nearest,
+          path, flow: 0
+        };
+        threads.push(t);
+        h.owner.connections.add(nearest.id);
+        nearest.connections.add(h.owner.id);
+        // Two motes, each direction, slightly offset start
+        motes.push({ thread: t, t: 0.1,  dir:  1, speed: MOTE_BASE_SPEED*(0.7+Math.random()*0.6) });
+        motes.push({ thread: t, t: 0.9,  dir: -1, speed: MOTE_BASE_SPEED*(0.7+Math.random()*0.6) });
+      }
+      h.alive = false;
+      continue;
+    }
+
+    // 3-sensor pheromone
+    const ca = h.angle;
+    const la = h.angle - SENSOR_ANGLE;
+    const ra = h.angle + SENSOR_ANGLE;
+    const ahead = getPheromone(h.x + Math.cos(ca)*SENSOR_DIST, h.y + Math.sin(ca)*SENSOR_DIST);
+    const left  = getPheromone(h.x + Math.cos(la)*SENSOR_DIST, h.y + Math.sin(la)*SENSOR_DIST);
+    const right = getPheromone(h.x + Math.cos(ra)*SENSOR_DIST, h.y + Math.sin(ra)*SENSOR_DIST);
+
+    // Pheromone follow is deliberately WEAK (spread, don't converge)
+    let turn = (Math.random() - 0.5) * 0.72;
+    if      (left > ahead && left > right)  turn -= 0.14;
+    else if (right > ahead && right > left) turn += 0.14;
+
+    // Node attraction — tapers off at very long/short range
+    if (nearest && nearestD > TOUCH_RADIUS) {
+      const targetAngle = Math.atan2(nearest.y - h.y, nearest.x - h.x);
+      let diff = targetAngle - h.angle;
+      while (diff >  Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      const pull = 0.28 / (1 + nearestD * 0.009);
+      turn += diff * pull;
+    }
+
+    h.angle += turn;
+    h.x += Math.cos(h.angle) * HYPHA_SPEED;
+    h.y += Math.sin(h.angle) * HYPHA_SPEED;
+
+    if (h.x < 0 || h.x > W || h.y < 0 || h.y > H) { h.alive = false; continue; }
+
+    addPheromone(h.x, h.y, PHEROMONE_STR);
+
+    if (h.age % PATH_INTERVAL === 0) h.path.push({x: h.x, y: h.y});
+  }
+
+  hyphae = hyphae.filter(h => h.alive);
+}
+
+// ── Thread & mote system ───────────────────────────────────
+function updateThreadsAndMotes() {
+  // Advance thread flow and fade dying threads
+  for (const t of threads) {
+    if (t.fading) {
+      t.fadeLife -= 1 / THREAD_FADE_DURATION;
+    } else {
+      t.flow = Math.min(1, t.flow + 0.00075);
+      // ── Live endpoint tracking: keep first and last path points pinned to their nodes
+      // This fixes threads going stale when nodes drift due to repulsion
+      if (t.path.length >= 2) {
+        t.path[0] = { x: t.from.x, y: t.from.y };
+        t.path[t.path.length - 1] = { x: t.to.x, y: t.to.y };
+      }
+    }
+  }
+  threads = threads.filter(t => !t.fading || t.fadeLife > 0);
+
+  // Remove motes whose thread is fading or gone
+  motes = motes.filter(m => m.thread && !m.thread.fading);
+
+  for (const m of motes) {
+    m.t += m.dir * m.speed;
+    if (m.t >= 1) {
+      m.t = 1; m.dir = -1;
+      const give = Math.min(MOTE_MASS_TRANSFER * m.thread.from.mass, MOTE_MASS_TRANSFER);
+      if (m.thread.from.mass > NODE_MIN_MASS * 2) {
+        m.thread.from.mass -= give;
+        m.thread.to.mass   += give;
+      }
+    }
+    if (m.t <= 0) {
+      m.t = 0; m.dir = 1;
+      const give = Math.min(MOTE_MASS_TRANSFER * m.thread.to.mass, MOTE_MASS_TRANSFER);
+      if (m.thread.to.mass > NODE_MIN_MASS * 2) {
+        m.thread.to.mass   -= give;
+        m.thread.from.mass += give;
+      }
+    }
+  }
+}
+
+// ── Interpolate along path ─────────────────────────────────
+function pathPoint(path, t) {
+  if (path.length < 2) return path[0] ?? {x:0,y:0};
+  const idx  = Math.max(0, Math.min(t * (path.length - 1), path.length - 1.001));
+  const i    = Math.floor(idx);
+  const f    = idx - i;
+  const p0   = path[i];
+  const p1   = path[Math.min(i+1, path.length-1)];
+  return { x: p0.x + (p1.x - p0.x)*f, y: p0.y + (p1.y - p0.y)*f };
+}
+
+// ── Rendering ──────────────────────────────────────────────
+function render() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Petri-dish background with subtle radial vignette
+  const bg = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*0.75);
+  bg.addColorStop(0, '#050a0e');
+  bg.addColorStop(1, '#020407');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.lineCap  = 'round';
+  ctx.lineJoin = 'round';
+
+  // ── Burn zones — annihilated ground, fading scar
+  for (const z of burnZones) {
+    const life = Math.max(0, (z.expiresAt - frame) / RUPTURE_COOLDOWN);
+    if (life <= 0) continue;
+    // Outer boundary ring — faint, harsh
+    ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(200, 80, 50, ${life * 0.18})`;
+    ctx.lineWidth   = 1;
+    ctx.setLineDash([5, 8]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Interior fill — scorched void
+    const fill = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.r);
+    fill.addColorStop(0,   `rgba(30, 8, 4, ${life * 0.22})`);
+    fill.addColorStop(0.7, `rgba(20, 5, 3, ${life * 0.1})`);
+    fill.addColorStop(1,   `rgba(0,0,0,0)`);
+    ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI*2);
+    ctx.fillStyle = fill; ctx.fill();
+  }
+
+  // ── Burn zones — annihilated ground, no new formation allowed
+  for (const z of burnZones) {
+    if (frame >= z.expiresAt) continue;
+    const life = 1 - (frame - (z.expiresAt - RUPTURE_COOLDOWN)) / RUPTURE_COOLDOWN;
+    // Scorched fill — deep red ember fading to nothing
+    const fill = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.r);
+    fill.addColorStop(0,   `rgba(80, 10, 5, ${life * 0.18})`);
+    fill.addColorStop(0.6, `rgba(60, 8, 4, ${life * 0.10})`);
+    fill.addColorStop(1,   `rgba(40, 5, 2, 0)`);
+    ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI*2);
+    ctx.fillStyle = fill; ctx.fill();
+    // Edge ring — barely visible boundary
+    ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(120, 25, 10, ${life * 0.22})`;
+    ctx.lineWidth   = 1.2;
+    ctx.setLineDash([6, 8]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // ── Shockwaves — cold death rings
+  for (const s of shockwaves) {
+    const a = s.life;
+    if (s.rupture) {
+      // Rupture — harsh, wide, multiple rings
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(175, 210, 165, ${a * 0.7})`;
+      ctx.lineWidth   = 2.5 * a;
+      ctx.stroke();
+      if (s.r > 20) {
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r * 0.7, 0, Math.PI*2);
+        ctx.strokeStyle = `rgba(155, 195, 145, ${a * 0.35})`;
+        ctx.lineWidth   = 1.2 * a;
+        ctx.stroke();
+      }
+    } else {
+      // Node death — quieter, tighter
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(165, 195, 155, ${a * 0.55})`;
+      ctx.lineWidth   = 1.5 * a;
+      ctx.stroke();
+      if (s.r < s.maxR * 0.55) {
+        const fill = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r);
+        fill.addColorStop(0, `rgba(165, 195, 155, ${a * 0.04})`);
+        fill.addColorStop(1, `rgba(165, 195, 155, 0)`);
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+        ctx.fillStyle = fill; ctx.fill();
+      }
+    }
+  }
+
+  // ── Pulses — expanding rings of intention
+  for (const p of pulses) {
+    if (p.spontaneous) {
+      // Spontaneous formation — quiet, cool, already-there
+      // Single thin ring, silver-green, no fill — a signal from somewhere else
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(155, 195, 155, ${p.life * 0.28})`;
+      ctx.lineWidth   = 0.7;
+      ctx.stroke();
+    } else {
+      // Click pulse — warm, summoning, intentional
+      const outerA = p.life * 0.35;
+      const innerA = p.life * 0.07;
+
+      if (p.r < PULSE_MAX_R * 0.5) {
+        const innerR = p.r * 0.7;
+        const fill = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, innerR);
+        fill.addColorStop(0, `rgba(210, 185, 120, ${innerA})`);
+        fill.addColorStop(1, `rgba(210, 185, 120, 0)`);
+        ctx.beginPath(); ctx.arc(p.x, p.y, innerR, 0, Math.PI*2);
+        ctx.fillStyle = fill; ctx.fill();
+      }
+
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(210, 185, 120, ${outerA})`;
+      ctx.lineWidth   = 1.2;
+      ctx.stroke();
+
+      if (p.r > 12) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r - 8, 0, Math.PI*2);
+        ctx.strokeStyle = `rgba(185, 158, 95, ${outerA * 0.4})`;
+        ctx.lineWidth   = 3.5;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // ── Threads ──
+  for (const t of threads) {
+    const fade  = t.fading ? t.fadeLife : 1;
+    const alpha = (0.22 + t.flow * 0.55) * fade;
+    const width = (0.35 + t.flow * 4.5) * fade;
+    if (alpha < 0.01) continue;
+    ctx.beginPath();
+    ctx.moveTo(t.path[0].x, t.path[0].y);
+    for (let i = 1; i < t.path.length; i++) ctx.lineTo(t.path[i].x, t.path[i].y);
+    ctx.strokeStyle = `rgba(195, 152, 58, ${alpha})`;
+    ctx.lineWidth = Math.max(0.1, width);
+    ctx.shadowBlur  = isTouch ? 0 : (8 + t.flow * 10) * fade;
+    ctx.shadowColor = `rgba(195, 152, 58, 0.28)`;
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+
+  // ── Resource motes ──
+  ctx.shadowBlur  = 10;
+  ctx.shadowColor = 'rgba(175, 230, 250, 0.85)';
+  for (const m of motes) {
+    const p = pathPoint(m.thread.path, m.t);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 2.2, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(185, 235, 255, 0.92)';
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+
+  // ── Hypha trails + tips ──
+  for (const h of hyphae) {
+    const progress = h.age / HYPHA_MAX_AGE;
+    const fade = 1 - progress * 0.6;
+
+    if (h.path.length >= 2) {
+      ctx.beginPath();
+      ctx.moveTo(h.path[0].x, h.path[0].y);
+      for (let i = 1; i < h.path.length; i++) ctx.lineTo(h.path[i].x, h.path[i].y);
+      ctx.strokeStyle = `rgba(65, 155, 65, ${0.11 * fade})`;
+      ctx.lineWidth   = 0.65;
+      ctx.shadowBlur  = 0;
+      ctx.stroke();
+    }
+    // Glowing tip
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, isTouch ? 2.5 : 1.8, 0, Math.PI*2);
+    ctx.fillStyle   = `rgba(95, 205, 95, ${0.75 * fade})`;
+    ctx.shadowBlur  = isTouch ? 0 : 6;
+    ctx.shadowColor = 'rgba(80, 200, 80, 0.5)';
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+
+  // ── Echoes — names of what was, slowly returning to the field
+  ctx.textAlign = 'center';
+  for (const e of echoes) {
+    const sz  = isTouch ? 10 : 9;
+    const a   = e.life * 0.28;   // always faint — a whisper, not a shout
+    ctx.font      = `italic ${sz}px EB Garamond, Georgia, serif`;
+    ctx.fillStyle = `rgba(170, 145, 90, ${a})`;
+    ctx.fillText(e.label, e.x, e.y);
+  }
+
+  // ── Nodes ──
+  for (const n of nodes) {
+    const r = (isTouch ? 5 : 3.5) + Math.log1p(n.mass) * (isTouch ? 3.8 : 2.8);
+    const isExpand = n.phase === 'expand';
+    const [cr, cg, cb] = isExpand ? [225, 178, 72] : [178, 128, 45];
+    const fadeIn   = Math.min(1, (frame - n.birthFrame) / 60);
+    const vitality = Math.min(1, n.mass / 3);   // dims as node approaches death threshold
+    const alpha    = fadeIn * vitality;
+
+    // Outer glow
+    ctx.shadowBlur  = isTouch ? 0 : (isExpand ? 28 : 16);
+    ctx.shadowColor = `rgba(${cr}, ${cg}, ${cb}, 0.55)`;
+
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${alpha})`;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Pulse ring for expand nodes
+    if (isExpand) {
+      const pulse = (Math.sin(frame * 0.028 + n.pulseOffset) + 1) * 0.5;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r + 5 + pulse * 8, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(${cr}, ${cg}, ${cb}, ${0.18 * (1 - pulse) * alpha})`;
+      ctx.lineWidth   = isTouch ? 1.5 : 1;
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r + 4, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(${cr}, ${cg}, ${cb}, ${0.22 * alpha})`;
+      ctx.lineWidth   = isTouch ? 1.2 : 0.6;
+      ctx.stroke();
+    }
+
+    // Urgent reorganisation flicker — rapid pulse when node has lost a connection
+    if (n.urgentUntil && frame < n.urgentUntil) {
+      const urgency = Math.max(0, (n.urgentUntil - frame) / URGENT_EMIT_DURATION);
+      const flicker = (Math.sin(frame * 0.18) + 1) * 0.5; // fast
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r + 7 + flicker * 12, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(${cr}, ${cg}, ${cb}, ${0.28 * urgency * flicker})`;
+      ctx.lineWidth   = isTouch ? 2 : 1.4;
+      ctx.stroke();
+    }
+
+    // ── Label
+    if (n.label && alpha > 0.15) {
+      const fontSize = isExpand
+        ? (isTouch ? 13 : 11)
+        : (isTouch ? 10 : 9);
+      const labelY = n.y + r + fontSize + (isTouch ? 7 : 5);
+      const labelA = alpha * (isExpand ? 0.72 : 0.48);
+      ctx.font      = `${fontSize}px EB Garamond, Georgia, serif`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${labelA})`;
+      ctx.fillText(n.label, n.x, labelY);
+    }
+  }
+
+  // ── Spores ──
+  for (const s of spores) {
+    const isSeeking = s.seeking && (frame - s.seekBorn) < 180;
+    const isVet     = s.veteran;
+    const r     = (isTouch ? 1.8 : 0.9) + s.mass * 0.6 + (isVet ? 1.8 : isSeeking ? 1.0 : 0);
+    const alpha = Math.min(0.75, 0.18 + s.mass * 0.06) + (isVet ? 0.25 : 0);
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, r, 0, Math.PI*2);
+    ctx.fillStyle = isVet
+      ? `rgba(70, 200, 175, ${alpha})`       // teal — purposeful, experienced
+      : isSeeking
+        ? `rgba(140, 200, 140, ${alpha})`    // cool green — displaced, seeking
+        : `rgba(80, 150, 80, ${alpha})`;     // standard spore
+    ctx.fill();
+  }
+
+  // ── Cursor mass glow ──
+  if (cursor.active) {
+    const glowR = isTouch ? 80 : 55;
+    const cg = ctx.createRadialGradient(cursor.x, cursor.y, 0, cursor.x, cursor.y, glowR);
+    cg.addColorStop(0,   'rgba(210, 185, 120, 0.07)');
+    cg.addColorStop(0.4, 'rgba(210, 185, 120, 0.025)');
+    cg.addColorStop(1,   'rgba(210, 185, 120, 0)');
+    ctx.beginPath();
+    ctx.arc(cursor.x, cursor.y, glowR, 0, Math.PI*2);
+    ctx.fillStyle = cg;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(cursor.x, cursor.y, isTouch ? 4 : 2.5, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(225, 200, 130, 0.55)';
+    ctx.shadowBlur  = isTouch ? 0 : 10;
+    ctx.shadowColor = 'rgba(220, 190, 100, 0.6)';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+// ── Shockwave system ────────────────────────────────────────
+function updateShockwaves() {
+  for (const s of shockwaves) {
+    s.r    += 4.5;   // fast expansion
+    s.life  = 1 - (s.r / s.maxR);
+  }
+  shockwaves = shockwaves.filter(s => s.life > 0);
+}
+
+// ── Pulse system ───────────────────────────────────────────
+function updatePulses() {
+  for (const p of pulses) {
+    const speed = p.spontaneous
+      ? 0.85 + (1 - p.life) * 0.4    // slower, meditative — already formed, just announcing
+      : 1.8 + (1 - p.life) * 1.2;    // click pulse — energetic, summoning
+    p.r    += speed;
+    p.life  = 1 - (p.r / PULSE_MAX_R);
+
+    // Spontaneous pulses don't attract — they signal, not summon
+    if (p.spontaneous) continue;
+
+    // Click pulses attract spores within the wave band
+    for (const s of spores) {
+      const dx   = p.x - s.x;
+      const dy   = p.y - s.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const diff = Math.abs(dist - p.r);
+      if (diff < PULSE_ATTRACT_BAND) {
+        const strength = (1 - diff / PULSE_ATTRACT_BAND) * PULSE_ATTRACT_G * p.life;
+        s.vx += (dx / dist) * strength;
+        s.vy += (dy / dist) * strength;
+      }
+    }
+  }
+  pulses = pulses.filter(p => p.life > 0 && p.r < PULSE_MAX_R);
+}
+function loop() {
+  updateSpores();
+  updateNodes();
+  updateHyphae();
+  updateThreadsAndMotes();
+  updatePulses();
+  updateShockwaves();
+  // Expire old burn zones
+  burnZones = burnZones.filter(z => frame < z.expiresAt);
+  decayPheromone();
+  render();
+  frame++;
+  requestAnimationFrame(loop);
+}
+
+// ── Seed initial clusters ──────────────────────────────────
+const margin = 0.14;
+const positions = [
+  [0.22, 0.28], [0.55, 0.18], [0.80, 0.32],
+  [0.15, 0.62], [0.48, 0.72], [0.78, 0.65],
+  [0.36, 0.45]
+];
+for (const [px, py] of positions) {
+  seedCluster(W*px + (Math.random()-0.5)*40, H*py + (Math.random()-0.5)*40, 7);
+  sporesSpawned += 7;
+}
+// A few stray loners
+for (let i = 0; i < 12; i++) { spores.push(makeSpore()); sporesSpawned++; }
+
+// ── Click/tap to seed + pulse ────────────────────────────────
+function spawnPulse(x, y) {
+  pulses.push({ x, y, r: 0, life: 1.0 });
+}
+
+canvas.addEventListener('click', e => {
+  if (e.button !== 0) return;                    // left-click only
+  if (frame - lastRightClick < 3) return;        // ignore if right-click just fired
+  seedCluster(e.clientX, e.clientY, 6);
+  spawnPulse(e.clientX, e.clientY);
+});
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  seedCluster(t.clientX, t.clientY, 6);
+  spawnPulse(t.clientX, t.clientY);
+}, { passive: false });
+
+// ── Right-click: ANNIHILATION — total destruction, burn zone cooldown
+canvas.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  lastRightClick = frame;
+  const rx = e.clientX, ry = e.clientY;
+
+  // Massive shockwave
+  shockwaves.push({ x: rx, y: ry, r: 0, life: 1.0, maxR: RUPTURE_RADIUS * 2.6, rupture: true });
+
+  // Burn zone — node formation blocked here during cooldown
+  burnZones.push({ x: rx, y: ry, r: RUPTURE_RADIUS, expiresAt: frame + RUPTURE_COOLDOWN });
+
+  // Annihilate ALL nodes in radius
+  const victims = nodes.filter(n => Math.sqrt((n.x-rx)**2 + (n.y-ry)**2) < RUPTURE_RADIUS);
+  for (const v of victims) {
+    v.alive = false;
+    if (v.label) echoes.push({ x: v.x, y: v.y, label: v.label, life: 1.0, decay: 0.0005 });
+    for (const h of hyphae) { if (h.owner === v) h.alive = false; }
+    for (const t of threads) {
+      if (t.from === v || t.to === v) {
+        t.fading = true; t.fadeLife = 1.0;
+        const survivor = t.from === v ? t.to : t.from;
+        survivor.connections.delete(v.id);
+        survivor.emitTimer = 0;
+        survivor.urgentUntil = frame + URGENT_EMIT_DURATION * 3; // tripled urgency
+      }
+    }
+
+    const totalMass = Math.max(v.mass, NODE_THRESHOLD);
+
+    // 99% → scattered seeds blasting hard outward
+    const regularCount = Math.floor(totalMass * 1.2);
+    for (let s = 0; s < regularCount; s++) {
+      const a = Math.random()*Math.PI*2, sp = 1.2+Math.random()*3.8;
+      spores.push({ x:v.x+Math.cos(a)*12, y:v.y+Math.sin(a)*12,
+        vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, mass:1, seeking:true, seekBorn:frame });
+    }
+
+    // Veterans — skip wander entirely, immediately seeking, much shorter deadline
+    const vetCount = Math.max(2, Math.floor(totalMass * 0.08));
+    for (let s = 0; s < vetCount; s++) {
+      const a = Math.random()*Math.PI*2, sp = 0.6+Math.random()*1.8;
+      spores.push({
+        x: v.x+Math.cos(a)*12, y: v.y+Math.sin(a)*12,
+        vx: Math.cos(a)*sp, vy: Math.sin(a)*sp,
+        mass: 1.5, veteran: true, seeking: true, vetTarget: null,
+        seekBorn: frame - VETERAN_WANDER_FRAMES,  // no wander — straight to seek
+        vetMaxFrames: RUPTURE_VET_MAX             // tighter deadline
+      });
+    }
+  }
+  nodes = nodes.filter(n => n.alive !== false);
+});
+
+
+// Cursor tracking — mouse and touch
+canvas.addEventListener('mousemove', e => {
+  cursor.x = e.clientX; cursor.y = e.clientY; cursor.active = true;
+});
+canvas.addEventListener('mouseleave', () => { if (!isTouch) cursor.active = false; });
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  cursor.x = e.touches[0].clientX;
+  cursor.y = e.touches[0].clientY;
+  cursor.active = true;
+}, { passive: false });
+canvas.addEventListener('touchstart', e => {
+  cursor.x = e.touches[0].clientX;
+  cursor.y = e.touches[0].clientY;
+  cursor.active = true;
+}, { passive: true });
+
+// ── CTA — surfaces gently after ~90s, dismissable
+let ctaDismissed = false;
+setTimeout(() => {
+  if (!ctaDismissed) document.getElementById('cta').classList.add('visible');
+}, 90000);
+
+function dismissCta() {
+  ctaDismissed = true;
+  const el = document.getElementById('cta');
+  el.style.transition = 'opacity 1.5s ease';
+  el.style.opacity = '0';
+  setTimeout(() => { el.style.pointerEvents = 'none'; }, 1600);
+  // Re-surface after another 90 seconds
+  setTimeout(() => {
+    if (!ctaDismissed) return;
+    ctaDismissed = false;
+    el.style.opacity = '';
+    el.classList.add('visible');
+  }, 90000);
+}
+
+function goForward() {
+  document.body.style.transition = 'opacity 1.4s ease';
+  document.body.style.opacity = '0';
+  setTimeout(() => { window.location.href = 'reach-out.html'; }, 1500);
+}
+
+loop();
+</script>
+</body>
+</html>

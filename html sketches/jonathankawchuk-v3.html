@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>jonathan kawchuk</title>
+
+  <!--
+    FF DAX — drop your .woff2 files into a fonts/ folder beside this file.
+    Weights needed: 400 (Regular), 500 (Medium).
+    Monotype web licence required.
+  -->
+  <style>
+    @font-face {
+      font-family: 'FF Dax';
+      src: url('fonts/FFDax-Regular.woff2') format('woff2');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'FF Dax';
+      src: url('fonts/FFDax-Medium.woff2') format('woff2');
+      font-weight: 500;
+      font-style: normal;
+      font-display: swap;
+    }
+  </style>
+
+  <style>
+    :root {
+      --white:   #ffffff;
+      --ink:     #141414;
+      --mid:     #888;
+      --dim:     #bbb;
+      --rule:    #e0e0e0;
+      --dark-bg: #1c1c1c;
+      --dark-ink:#f0f0f0;
+      --dark-dim:#888;
+      --ff: 'FF Dax', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      background: var(--white);
+      color: var(--ink);
+      font-family: var(--ff);
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    ul { list-style: none; }
+    button { all: unset; cursor: pointer; }
+
+    /* ── Layout ─────────────────────────────────────── */
+    .w {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ── Fixed corners ──────────────────────────────── */
+    #tl {
+      position: fixed;
+      top: 1.4rem;
+      left: 1.5rem;
+      z-index: 50;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    #tl a { color: var(--ink); }
+
+    #tr {
+      position: fixed;
+      top: 1.4rem;
+      right: 1.5rem;
+      z-index: 50;
+      text-align: right;
+    }
+
+    #clock {
+      font-size: 0.62rem;
+      color: var(--mid);
+      letter-spacing: 0.06em;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    #nav-toggle {
+      font-size: 0.72rem;
+      color: var(--mid);
+      font-family: var(--ff);
+      transition: color 0.15s;
+    }
+    #nav-toggle:hover { color: var(--ink); }
+
+    #nav-links {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.15rem;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.3s ease, opacity 0.2s ease;
+      margin-top: 0.3rem;
+    }
+    #nav-links.open { max-height: 160px; opacity: 1; }
+
+    #nav-links a {
+      font-size: 0.7rem;
+      color: var(--mid);
+      transition: color 0.15s;
+      white-space: nowrap;
+    }
+    #nav-links a:hover { color: var(--ink); }
+
+    /* ── Main ───────────────────────────────────────── */
+    main {
+      padding-top: 7rem;
+      padding-bottom: 8rem;
+    }
+
+    /* ── Name / intro ───────────────────────────────── */
+    #intro {
+      padding-bottom: 5rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 1.6rem;
+    }
+
+    .intro-note {
+      font-size: 0.88rem;
+      color: var(--mid);
+      line-height: 1.7;
+      max-width: 440px;
+    }
+
+    /* ── Scatter zone ───────────────────────────────── */
+    #scatter {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      margin-bottom: 5rem;
+      overflow: hidden;
+    }
+
+    .si {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      filter: grayscale(100%);
+      transition: filter 0.3s, transform 0.3s;
+      border: 1px solid #e8e8e8;
+      object-fit: cover;
+      z-index: 1;
+    }
+    .si:hover {
+      filter: grayscale(0%);
+      transform: translate(-50%, -50%) scale(1.5);
+      z-index: 5;
+      border-color: #ccc;
+    }
+
+    /* placeholder gradients until real images are provided */
+    .si.ph {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(0,0,0,0.15);
+    }
+    .si.a { background: #dbd8d2; width: 240px; height: 160px; left: 15%; top: 45%; }
+    .si.b { background: #c8c5c0; width: 160px; height: 108px; left: 35%; top: 25%; }
+    .si.c { background: #e2dfda; width: 190px; height: 128px; left: 58%; top: 55%; }
+    .si.d { background: #d0cdc8; width: 130px; height: 88px;  left: 75%; top: 28%; }
+    .si.e { background: #cac7c2; width: 110px; height: 74px;  left: 46%; top: 72%; }
+
+    /* mobile: stack into grid */
+    @media (max-width: 640px) {
+      #scatter {
+        height: auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        padding: 0 1.5rem;
+        overflow: visible;
+      }
+      .si {
+        position: static;
+        transform: none;
+        width: 100% !important;
+        height: 110px !important;
+        left: auto !important;
+        top: auto !important;
+      }
+      .si:hover {
+        transform: none;
+      }
+    }
+
+    /* ── Work list ──────────────────────────────────── */
+    #work {
+      padding-bottom: 5rem;
+    }
+
+    .work-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--rule);
+      transition: opacity 0.15s;
+    }
+    .work-item:first-child { border-top: 1px solid var(--rule); }
+    .work-item:hover { opacity: 0.5; }
+
+    .wi-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .wi-meta {
+      font-size: 0.7rem;
+      color: var(--mid);
+      text-align: right;
+    }
+
+    /* ── Horizontal rule with text ──────────────────── */
+    .section-break {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 3rem 0 2.5rem;
+      font-size: 0.62rem;
+      color: var(--dim);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .section-break::before,
+    .section-break::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--rule);
+    }
+
+    /* ── Diary / Changelog ──────────────────────────── */
+    #diary { padding-bottom: 5rem; }
+
+    /* The block — matches the screenshot visual exactly */
+    .entry {
+      background: var(--dark-bg);
+      color: var(--dark-ink);
+      padding: 2.4rem 2rem;
+      margin-bottom: 1.5rem;
+      font-family: var(--ff);
+    }
+
+    /* Triangle ornament — top */
+    .entry-top {
+      margin-bottom: 1.4rem;
+    }
+    .tri-row {
+      display: flex;
+      justify-content: center;
+      gap: 2.2rem;
+      font-size: 0.5rem;
+      color: var(--dark-dim);
+      margin-bottom: 0.35rem;
+    }
+    .tri-rule {
+      height: 1px;
+      background: rgba(255,255,255,0.12);
+    }
+
+    /* Triangle ornament — bottom */
+    .entry-bottom {
+      margin-top: 1.4rem;
+    }
+    .entry-bottom .tri-rule {
+      margin-bottom: 0.35rem;
+    }
+
+    .entry-date {
+      font-size: 0.62rem;
+      color: var(--dark-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .entry-text {
+      font-size: 0.92rem;
+      line-height: 1.75;
+      color: var(--dark-ink);
+    }
+
+    /* SoundCloud embed — stripped */
+    .entry-audio {
+      margin-top: 1.4rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 1rem;
+    }
+
+    /*
+      SoundCloud embed: minimal. Use height=20 for controls-only (no artwork).
+      URL params: color=%23ffffff&auto_play=false&hide_related=true
+                  &show_comments=false&show_user=false&show_reposts=false
+                  &show_teaser=false
+      Still SC-branded but as small as it gets without a custom player.
+      Alternative: just use a plain text link (see .audio-link below) —
+      cleaner but no waveform.
+    */
+    .sc-embed {
+      width: 100%;
+      border: none;
+      overflow: hidden;
+      display: block;
+    }
+
+    /* plain text fallback / alternative to embed */
+    .audio-link {
+      display: inline-block;
+      font-size: 0.72rem;
+      color: var(--dark-dim);
+      letter-spacing: 0.04em;
+      transition: color 0.15s;
+    }
+    .audio-link:hover { color: var(--dark-ink); }
+    .audio-link::before { content: '↳ '; }
+
+    /* ── Footer ─────────────────────────────────────── */
+    footer {
+      padding-top: 2rem;
+      border-top: 1px solid var(--rule);
+    }
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    footer p {
+      font-size: 0.72rem;
+      color: var(--mid);
+      line-height: 1.7;
+    }
+
+    footer a {
+      color: var(--ink);
+      border-bottom: 1px solid var(--rule);
+      transition: border-color 0.15s;
+    }
+    footer a:hover { border-color: var(--ink); }
+
+    .socials {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.3rem;
+    }
+
+    .socials a {
+      font-size: 0.7rem;
+      color: var(--mid);
+      border: none;
+      transition: color 0.15s;
+    }
+    .socials a:hover { color: var(--ink); }
+  </style>
+</head>
+
+<body>
+
+  <!-- corners -->
+  <div id="tl"><a href="#">[jk]</a></div>
+  <div id="tr">
+    <span id="clock"></span>
+    <button id="nav-toggle">[+]</button>
+    <nav id="nav-links">
+      <a href="#work">work</a>
+      <a href="#diary">diary</a>
+      <a href="#contact">contact</a>
+    </nav>
+  </div>
+
+  <main>
+
+    <!-- intro -->
+    <section id="intro" class="w">
+      <h1>jonathan kawchuk</h1>
+      <!--
+        COPY NEEDED: replace this with your own words.
+        Short. First person. Specific. No categories.
+        e.g. "i record places and write music for screens."
+      -->
+      <p class="intro-note">
+        sound pieces, field recordings, film scores.<br>
+        based in canada.
+      </p>
+    </section>
+
+    <!-- scatter -->
+    <section id="scatter" aria-hidden="true">
+      <!--
+        IMAGES NEEDED: replace .ph divs with real <img> tags.
+        e.g. <img class="si a" src="images/north-01.jpg" alt="..." />
+        Suggested: 4–6 images. Mix of landscapes, stills, locations.
+        Original file size doesn't matter — display size is 110–240px.
+      -->
+      <div class="si ph a">image</div>
+      <div class="si ph b">image</div>
+      <div class="si ph c">image</div>
+      <div class="si ph d">image</div>
+      <div class="si ph e">image</div>
+    </section>
+
+    <!-- work -->
+    <section id="work" class="w">
+
+      <a class="work-item" href="/everywhen">
+        <span class="wi-title">Everywhen</span>
+        <span class="wi-meta">sound installation</span>
+      </a>
+
+      <a class="work-item" href="/north">
+        <span class="wi-title">North</span>
+        <span class="wi-meta">composition</span>
+      </a>
+
+      <a class="work-item" href="/installation">
+        <span class="wi-title">Installation</span>
+        <span class="wi-meta">spatial sound</span>
+      </a>
+
+      <a class="work-item"
+         href="https://thenarwhal.ca/protecting-quiet-spaces-natural-sounds/"
+         target="_blank" rel="noopener">
+        <span class="wi-title">Protecting the Quiet</span>
+        <span class="wi-meta">field recording — The Narwhal</span>
+      </a>
+
+      <a class="work-item"
+         href="https://play.reelcrafter.com/COSlb0PsRdWZ8v-mTQevfw"
+         target="_blank" rel="noopener">
+        <span class="wi-title">Hunt for the Oldest DNA</span>
+        <span class="wi-meta">score — National Geographic</span>
+      </a>
+
+      <a class="work-item" href="/film">
+        <span class="wi-title">Film Composition</span>
+        <span class="wi-meta">screen / score</span>
+      </a>
+
+    </section>
+
+    <!-- diary / changelog -->
+    <section id="diary" class="w">
+
+      <div class="section-break">diary</div>
+
+      <!--
+        ══════════════════════════════════════════════
+        DIARY ENTRY TEMPLATE — duplicate this block
+        for each new entry. Newest at top.
+
+        For audio: two options shown below.
+        Option A: SC embed (minimal, but still SC-branded)
+        Option B: plain text link (cleaner)
+        ══════════════════════════════════════════════
+      -->
+
+      <!-- entry 1 — example with SoundCloud embed -->
+      <div class="entry">
+        <div class="entry-top">
+          <div class="tri-row">
+            <span>▲</span><span>▲</span><span>▲</span><span>▲</span><span>▲</span>
+          </div>
+          <div class="tri-rule"></div>
+        </div>
+
+        <p class="entry-date">2026 — 03 — 30</p>
+
+        <p class="entry-text">
+          The conceptual and technical challenges of this record cannot outpace
+          the musical ideas. I'm fooling myself thinking that I'm addressing that
+          by building technical tools.
+        </p>
+
+        <!-- Option A: SC embed — replace src URL with your track -->
+        <!--
+        <div class="entry-audio">
+          <iframe class="sc-embed" height="20"
+            src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/YOUR_TRACK_URL&color=%23ffffff&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false"
+            scrolling="no" frameborder="0" allow="autoplay">
+          </iframe>
+        </div>
+        -->
+
+        <!-- Option B: plain text link (recommended) -->
+        <div class="entry-audio">
+          <a class="audio-link"
+             href="https://soundcloud.com/YOUR_TRACK_URL"
+             target="_blank" rel="noopener">
+            title of track — soundcloud
+          </a>
+        </div>
+
+        <div class="entry-bottom">
+          <div class="tri-rule"></div>
+          <div class="tri-row">
+            <span>▼</span><span>▼</span><span>▼</span><span>▼</span><span>▼</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- entry 2 — example without audio -->
+      <div class="entry">
+        <div class="entry-top">
+          <div class="tri-row">
+            <span>▲</span><span>▲</span><span>▲</span><span>▲</span><span>▲</span>
+          </div>
+          <div class="tri-rule"></div>
+        </div>
+
+        <p class="entry-date">2026 — 03 — 14</p>
+
+        <p class="entry-text">
+          <!--
+            COPY NEEDED: write this yourself.
+            Short. Specific. Honest. No need to explain the project.
+          -->
+          [your entry here]
+        </p>
+
+        <div class="entry-bottom">
+          <div class="tri-rule"></div>
+          <div class="tri-row">
+            <span>▼</span><span>▼</span><span>▼</span><span>▼</span><span>▼</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- footer -->
+    <footer id="contact" class="w">
+      <div class="footer-row">
+        <p>
+          <a href="mailto:hello@jonathankawchuk.com">hello@jonathankawchuk.com</a>
+        </p>
+        <div class="socials">
+          <a href="#" target="_blank">instagram</a>
+          <a href="#" target="_blank">bandcamp</a>
+          <a href="#" target="_blank">soundcloud</a>
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <script>
+    // clock
+    const cl = document.getElementById('clock');
+    function pad(n){ return String(n).padStart(2,'0'); }
+    function tick(){
+      const n = new Date();
+      cl.textContent =
+        `${n.getFullYear()}.${pad(n.getMonth()+1)}.${pad(n.getDate())} `+
+        `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+    }
+    tick(); setInterval(tick, 1000);
+
+    // nav toggle
+    const tog = document.getElementById('nav-toggle');
+    const nav = document.getElementById('nav-links');
+    let open = false;
+    tog.addEventListener('click', () => {
+      open = !open;
+      tog.textContent = open ? '[-]' : '[+]';
+      nav.classList.toggle('open', open);
+    });
+    nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+      open = false; tog.textContent = '[+]'; nav.classList.remove('open');
+    }));
+
+    // scatter: subtle drift on mousemove, touch: tap to toggle color
+    const scatterEl = document.getElementById('scatter');
+    const imgs = scatterEl ? scatterEl.querySelectorAll('.si') : [];
+
+    if (scatterEl && window.innerWidth > 640) {
+      scatterEl.addEventListener('mousemove', e => {
+        const r = scatterEl.getBoundingClientRect();
+        const mx = (e.clientX - r.left) / r.width  - 0.5;
+        const my = (e.clientY - r.top)  / r.height - 0.5;
+        imgs.forEach((img, i) => {
+          if (img.matches(':hover')) return;
+          const f = (i % 3 + 1) * 3;
+          img.style.transform =
+            `translate(calc(-50% + ${mx*f}px), calc(-50% + ${my*f}px))`;
+        });
+      });
+      scatterEl.addEventListener('mouseleave', () => {
+        imgs.forEach(img => {
+          if (!img.matches(':hover')) img.style.transform = '';
+        });
+      });
+    }
+
+    // touch: tap image to toggle color
+    imgs.forEach(img => {
+      img.addEventListener('click', () => {
+        const on = img.style.filter === 'grayscale(0%)';
+        img.style.filter = on ? 'grayscale(100%)' : 'grayscale(0%)';
+      });
+    });
+  </script>
+
+</body>
+</html>

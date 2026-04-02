@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modular Interface</title>
+
+    <!-- DNS Prefetch & Preconnect for faster loading -->
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js" as="script" crossorigin>
+    <link rel="preload" href="css/base.css" as="style">
+
+    <!-- Inter Variable Font with display=swap for faster text rendering -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+
+    <!-- Safari compatibility meta tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+
+    <!-- Modular CSS Files -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/panels.css">
+    <link rel="stylesheet" href="css/sliders.css">
+    <link rel="stylesheet" href="css/colors.css">
+    <link rel="stylesheet" href="css/panel-middle.css">
+    <link rel="stylesheet" href="css/controls.css">
+</head>
+
+<body>
+    <!-- SVG Filters for Safari compatibility -->
+    <svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
+        <defs>
+            <!-- Threshold filter with adjustable level -->
+            <filter id="threshold-filter" color-interpolation-filters="sRGB">
+                <feColorMatrix type="saturate" values="0" />
+                <feComponentTransfer>
+                    <feFuncR type="discrete" tableValues="0 1" />
+                    <feFuncG type="discrete" tableValues="0 1" />
+                    <feFuncB type="discrete" tableValues="0 1" />
+                </feComponentTransfer>
+            </filter>
+            <!-- High contrast threshold -->
+            <filter id="threshold-high" color-interpolation-filters="sRGB">
+                <feColorMatrix type="saturate" values="0" />
+                <feComponentTransfer>
+                    <feFuncR type="linear" slope="20" intercept="-10" />
+                    <feFuncG type="linear" slope="20" intercept="-10" />
+                    <feFuncB type="linear" slope="20" intercept="-10" />
+                </feComponentTransfer>
+                <feComponentTransfer>
+                    <feFuncR type="discrete" tableValues="0 1" />
+                    <feFuncG type="discrete" tableValues="0 1" />
+                    <feFuncB type="discrete" tableValues="0 1" />
+                </feComponentTransfer>
+            </filter>
+        </defs>
+    </svg>
+
+    <div class="main-container">
+        <div class="scalable-container">
+            <div class="sidebar-section">
+                <!-- Top Panel: 290x570 -->
+                <div class="panel panel-top">
+                    <img src="logo.svg" alt="Multiverse Studio" class="panel-top-logo">
+                    <div class="panel-top-subtitle">PLAY TOOL v.001</div>
+                    <div class="panel-top-text">.</div>
+                    <img src="icon.svg" alt="Icon" class="panel-top-icon">
+                    <textarea class="panel-top-rectangle" id="text-input" placeholder="TYPE HERE..."
+                        spellcheck="false"></textarea>
+
+                    <!-- Sliders Container -->
+                    <div class="sliders-container">
+                        <div class="slider-vertical" data-slider-id="0">
+                            <div class="slider-label-top">SIZE</div>
+                            <div class="slider-track">
+                                <div class="slider-handle"></div>
+                            </div>
+                            <div class="slider-value-bottom">0</div>
+                        </div>
+                        <div class="slider-vertical" data-slider-id="1">
+                            <div class="slider-label-top">WGHT</div>
+                            <div class="slider-track">
+                                <div class="slider-handle"></div>
+                            </div>
+                            <div class="slider-value-bottom">0</div>
+                        </div>
+                        <div class="slider-vertical" data-slider-id="2">
+                            <div class="slider-label-top">SPAC</div>
+                            <div class="slider-track">
+                                <div class="slider-handle"></div>
+                            </div>
+                            <div class="slider-value-bottom">0</div>
+                        </div>
+                        <div class="slider-vertical" data-slider-id="3">
+                            <div class="slider-label-top">LINE</div>
+                            <div class="slider-track">
+                                <div class="slider-handle"></div>
+                            </div>
+                            <div class="slider-value-bottom">0</div>
+                        </div>
+                        <div class="slider-vertical" data-slider-id="4">
+                            <div class="slider-label-top">STRK</div>
+                            <div class="slider-track">
+                                <div class="slider-handle"></div>
+                            </div>
+                            <div class="slider-value-bottom">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Typography Controls -->
+                    <div class="typography-controls">
+                        <!-- Alignment Row -->
+                        <div class="alignment-row">
+                            <div class="alignment-item">
+                                <div class="alignment-dot" id="align-left-dot" data-align="left"></div>
+                                <svg class="alignment-icon" viewBox="0 0 16 16" width="12" height="12">
+                                    <rect x="1" y="2" width="10" height="2" fill="currentColor" />
+                                    <rect x="1" y="7" width="14" height="2" fill="currentColor" />
+                                    <rect x="1" y="12" width="8" height="2" fill="currentColor" />
+                                </svg>
+                            </div>
+                            <div class="alignment-item">
+                                <div class="alignment-dot active" id="align-center-dot" data-align="center"></div>
+                                <svg class="alignment-icon" viewBox="0 0 16 16" width="12" height="12">
+                                    <rect x="3" y="2" width="10" height="2" fill="currentColor" />
+                                    <rect x="1" y="7" width="14" height="2" fill="currentColor" />
+                                    <rect x="4" y="12" width="8" height="2" fill="currentColor" />
+                                </svg>
+                            </div>
+                            <div class="alignment-item">
+                                <div class="alignment-dot" id="align-right-dot" data-align="right"></div>
+                                <svg class="alignment-icon" viewBox="0 0 16 16" width="12" height="12">
+                                    <rect x="5" y="2" width="10" height="2" fill="currentColor" />
+                                    <rect x="1" y="7" width="14" height="2" fill="currentColor" />
+                                    <rect x="7" y="12" width="8" height="2" fill="currentColor" />
+                                </svg>
+                            </div>
+                            <div class="alignment-item" style="margin-left: auto;">
+                                <div class="alignment-dot" id="uppercase-dot"></div>
+                                <span class="alignment-label">AA</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Color Modification Bar -->
+                    <div class="color-bar">
+                        <div class="color-bar-track"></div>
+                        <span class="color-label">foreground</span>
+                        <div class="color-button" data-color-type="text">
+                            <div class="color-button-outer">
+                                <div class="color-button-inner" style="background-color: #000000;"></div>
+                            </div>
+                        </div>
+                        <span class="color-label">background</span>
+                        <div class="color-button" data-color-type="back">
+                            <div class="color-button-outer">
+                                <div class="color-button-inner" style="background-color: #ffffff;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Middle Panel: 290x310 -->
+                <div class="panel panel-middle">
+                    <!-- Tab Toggle Indicators -->
+                    <div class="tab-toggles-container">
+                        <div class="tab-toggle-group" data-tab="grid">
+                            <div class="toggle-dot toggle-dot-green" data-state="on"></div>
+                            <div class="toggle-dot toggle-dot-red active" data-state="off"></div>
+                        </div>
+                        <div class="tab-toggle-group" data-tab="secondo">
+                            <div class="toggle-dot toggle-dot-green active" data-state="on"></div>
+                            <div class="toggle-dot toggle-dot-red" data-state="off"></div>
+                        </div>
+                        <div class="tab-toggle-group" data-tab="terzo">
+                            <div class="toggle-dot toggle-dot-green active" data-state="on"></div>
+                            <div class="toggle-dot toggle-dot-red" data-state="off"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Buttons -->
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" data-tab="grid">cell noise</button>
+                        <button class="tab-btn" data-tab="secondo">threshold</button>
+                        <button class="tab-btn" data-tab="terzo">dithering</button>
+                    </div>
+
+                    <!-- Fixed spacer for toggle area -->
+                    <div class="tab-content-spacer">
+                        <!-- Cell shape toggle (visible only in tab grid) -->
+                        <div class="apply-text-toggles-row" id="cell-shape-container" style="display: none;">
+                            <div class="apply-text-toggle-item">
+                                <div class="cell-shape-dot active" id="cell-square-dot" data-shape="square"></div>
+                                <span class="apply-text-label">SQUARE</span>
+                            </div>
+                            <div class="apply-text-toggle-item">
+                                <div class="cell-shape-dot" id="cell-circle-dot" data-shape="circle"></div>
+                                <span class="apply-text-label">CIRCLE</span>
+                            </div>
+                        </div>
+                        <!-- Effect toggles (visible only in tab secondo) -->
+                        <div class="apply-text-toggles-row" id="apply-to-text-container" style="display: none;">
+                            <div class="apply-text-toggle-item">
+                                <div class="apply-text-dot active" id="apply-text-dot"></div>
+                                <span class="apply-text-label">APPLY TO TEXT</span>
+                            </div>
+                            <div class="apply-text-toggle-item">
+                                <div class="apply-text-dot" id="apply-blur-images-dot"></div>
+                                <span class="apply-text-label">BLUR IMAGES</span>
+                            </div>
+                        </div>
+                        <!-- Dithering mode toggle (visible only in tab terzo) -->
+                        <div class="apply-text-toggles-row" id="dithering-mode-container" style="display: none;">
+                            <div class="apply-text-toggle-item">
+                                <div class="dithering-mode-dot active" id="dithering-halftone-dot" data-mode="halftone">
+                                </div>
+                                <span class="apply-text-label">HALFTONE</span>
+                            </div>
+                            <div class="apply-text-toggle-item">
+                                <div class="dithering-mode-dot" id="dithering-pixel-dot" data-mode="pixel"></div>
+                                <span class="apply-text-label">PIXEL</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Horizontal Sliders (only 4) -->
+                    <div class="horizontal-sliders-container">
+                        <div class="horizontal-slider" data-h-slider-id="0">
+                            <div class="h-slider-header">
+                                <span class="h-slider-label">/variabile_primo_1</span>
+                                <span class="h-slider-value">50</span>
+                            </div>
+                            <div class="h-slider-track-container">
+                                <div class="h-slider-track">
+                                    <div class="h-slider-handle"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="horizontal-slider" data-h-slider-id="1">
+                            <div class="h-slider-header">
+                                <span class="h-slider-label">/variabile_primo_2</span>
+                                <span class="h-slider-value">50</span>
+                            </div>
+                            <div class="h-slider-track-container">
+                                <div class="h-slider-track">
+                                    <div class="h-slider-handle"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="horizontal-slider" data-h-slider-id="2">
+                            <div class="h-slider-header">
+                                <span class="h-slider-label">/variabile_primo_3</span>
+                                <span class="h-slider-value">50</span>
+                            </div>
+                            <div class="h-slider-track-container">
+                                <div class="h-slider-track">
+                                    <div class="h-slider-handle"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="horizontal-slider" data-h-slider-id="3">
+                            <div class="h-slider-header">
+                                <span class="h-slider-label">/variabile_primo_4</span>
+                                <span class="h-slider-value">50</span>
+                            </div>
+                            <div class="h-slider-track-container">
+                                <div class="h-slider-track">
+                                    <div class="h-slider-handle"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Controls: Grid -->
+                <div class="controls-container">
+                    <div class="control-row">
+                        <div class="control-btn" id="btn-add-img">+ IMG</div>
+                        <div class="control-btn" id="btn-add-txt">+ TXT</div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-btn control-btn-delete" id="btn-delete">DELETE</div>
+                        <div class="control-btn control-btn-export">EXPORT</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="canvas-section">
+                <div class="canvas-content">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js" crossorigin="anonymous"></script>
+
+    <!-- Core System Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/presets.js"></script>
+
+    <!-- Generator Modules -->
+    <script src="js/modules/TypographyMorpher.js"></script>
+    <script src="js/modules/GridDistorter.js"></script>
+
+    <!-- Main Application Logic -->
+    <script src="js/sketch.js"></script>
+
+    <!-- Modular JavaScript Files -->
+    <script src="js/scaling.js"></script>
+    <script src="js/sliders.js"></script>
+    <script src="js/color-picker.js"></script>
+    <script src="js/colors.js"></script>
+    <script src="js/panel-middle.js"></script>
+    <script src="js/typography-controls.js"></script>
+    <script src="js/inputs.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

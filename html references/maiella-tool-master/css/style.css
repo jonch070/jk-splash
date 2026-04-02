@@ -1,0 +1,117 @@
+/* === MAIELLA TOOL STYLES === */
+
+/* Splash/Gallery Overlay */
+.splash-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.splash-overlay.hidden {
+    display: none;
+}
+
+.splash-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.splash-title {
+    position: absolute;
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Roboto Mono', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.5em;
+    color: black;
+    z-index: 10;
+}
+
+.splash-subtitle {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.8rem;
+    color: #666;
+    text-align: center;
+    z-index: 10;
+    max-width: 80%;
+}
+
+.gallery-path {
+    position: absolute;
+    top: 15%;
+    left: 0;
+    width: 100%;
+    height: 85%;
+}
+
+.gallery-img {
+    position: absolute;
+    width: 20%;
+    max-width: 200px;
+    filter: grayscale(100%);
+    transition: all 0.3s;
+    border: 2px solid red;
+    cursor: pointer;
+    background: #ccc;
+}
+
+.gallery-img:hover {
+    filter: grayscale(0%);
+    transform: scale(1.5) !important;
+    z-index: 100;
+    border: 2px solid blue !important;
+}
+
+.splash-enter-btn {
+    position: absolute;
+    bottom: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 40px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1rem;
+    letter-spacing: 0.3em;
+    background: black;
+    color: white;
+    border: none;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s;
+}
+
+.splash-enter-btn:hover {
+    background: white;
+    color: black;
+    border: 1px solid black;
+}
+
+/* Base */
+@import 'base/reset.css';
+@import 'base/typography.css';
+
+/* Layout */
+@import 'layout/container.css';
+@import 'layout/panels.css';
+
+/* Components */
+@import 'components/code.css';
+@import 'components/overlay.css';
+@import 'components/ui.css';
+
+/* Responsive */
+@import 'responsive/mobile.css';
