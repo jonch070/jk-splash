@@ -87,8 +87,9 @@ var svg = d3.select("body").append("svg")
 var link = svg.append("g").selectAll(".link"),
     node = svg.append("g").selectAll(".node");
 
-d3.json("https://gist.githubusercontent.com/YungCrunchy/a3ee962aefedef7eafa586646a80c29e/raw/3596e184ddfed113f93d2fb99383d0989347296f/credits.json", function(error, classes) {
+d3.text("graph.md", function(error, text) {
   if (error) throw error;
+  var classes = parseGraph(text);
 
   var root = packageHierarchy(classes)
       .sum(function(d) { return d.size; });
@@ -137,6 +138,50 @@ function mouseouted(d) {
   node
       .classed("node--target", false)
       .classed("node--source", false);
+}
+
+// Parse human-editable graph.md into Bostock's flat-class structure.
+// Format:
+//   [category] Display Name
+//   Display Name -> other, other, other
+function parseGraph(text) {
+  var nodeCat = {}, edges = {}, order = [];
+  var section = null;
+  text.split(/\r?\n/).forEach(function(raw) {
+    var line = raw.trim();
+    if (!line || line.charAt(0) === "#") {
+      if (/^#\s*nodes/i.test(line)) section = "nodes";
+      else if (/^#\s*connections/i.test(line)) section = "edges";
+      return;
+    }
+    if (section === "nodes") {
+      var m = line.match(/^\[([^\]]+)\]\s*(.+)$/);
+      if (m) { nodeCat[m[2].trim()] = m[1].trim(); order.push(m[2].trim()); }
+    } else if (section === "edges") {
+      var p = line.split("->");
+      if (p.length === 2) {
+        var src = p[0].trim();
+        var tgts = p[1].split(",").map(function(s){return s.trim();}).filter(Boolean);
+        if (!edges[src]) edges[src] = [];
+        tgts.forEach(function(t) {
+          if (edges[src].indexOf(t) < 0) edges[src].push(t);
+          if (!edges[t]) edges[t] = [];
+          if (edges[t].indexOf(src) < 0) edges[t].push(src);
+        });
+      }
+    }
+  });
+  function path(name) {
+    var cat = nodeCat[name] || "uncategorized";
+    return "graph." + cat + "." + name;
+  }
+  return order.map(function(name) {
+    return {
+      name: path(name),
+      size: 1000,
+      imports: (edges[name] || []).map(path)
+    };
+  });
 }
 
 // Lazily construct the package hierarchy from class names.
