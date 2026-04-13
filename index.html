@@ -10,14 +10,8 @@
   <style>
     @font-face {
       font-family: 'Dax';
-      src: url('https://raw.githubusercontent.com/akhaku/lcstutoring/master/tutoringapp/static/fonts/Dax-Regular.ttf') format('truetype');
+      src: url('fonts/Dax Regular/Dax Regular.otf') format('opentype');
       font-weight: 400;
-      font-style: normal;
-    }
-    @font-face {
-      font-family: 'Dax';
-      src: url('https://raw.githubusercontent.com/akhaku/lcstutoring/master/tutoringapp/static/fonts/Dax-Bold.ttf') format('truetype');
-      font-weight: 700;
       font-style: normal;
     }
 
@@ -108,6 +102,11 @@
       fill: var(--text);
     }
 
+    .link--source, .link--target {
+      stroke: #DC866A;
+      stroke-opacity: 0.8;
+    }
+
     @media (max-width: 600px) {
       #bundle-svg {
         width: 350px;
@@ -131,17 +130,19 @@
   </main>
 
   <script>
+    // ─── Data ──────────────────────────────────────────────────────
+    // Only leaf nodes go here. Parent categories (work, writing, listening)
+    // are created automatically from the dot notation.
+    // "imports" = cross-branch connections (the curved edges).
     const data = [
-      { name: "work", size: 100, imports: ["work.everywhen", "work.north", "work.installation"] },
-      { name: "work.everywhen", size: 30, url: "https://jonathankawchuk.com/everywhen" },
-      { name: "work.north", size: 30, url: "https://jonathankawchuk.com/north" },
-      { name: "work.installation", size: 30, url: "https://jonathankawchuk.com/installation" },
-      { name: "writing", size: 100, imports: ["writing.protecting-quiet"] },
-      { name: "writing.protecting-quiet", size: 30, url: "https://thenarwhal.ca/protecting-quiet-spaces-natural-sounds/" },
-      { name: "listening", size: 100, imports: ["listening.reelcrafted", "listening.emp"] },
-      { name: "listening.reelcrafted", size: 30, url: "https://play.reelcrafter.com/COSlb0PsRdWZ8v-mTQevfw" },
-      { name: "listening.emp", size: 30, url: "https://emp.disco.ac/playlist-new/18442280?date=20240821&user_id=188042&signature=Hd2IqQansjJK2Iu9NEdQ12Vm8ts:IWvvdJ3Q" },
-      { name: "contact", size: 30, url: "https://jonathankawchuk.com/contact" }
+      { name: "work.everywhen",          url: "/everywhen",      imports: ["work.installation", "listening.reelcrafted"] },
+      { name: "work.north",              url: "/north",          imports: ["listening.reelcrafted"] },
+      { name: "work.installation",       url: "/installation",   imports: ["work.everywhen"] },
+      { name: "writing.protecting-quiet", url: "https://thenarwhal.ca/protecting-quiet-spaces-natural-sounds/", imports: ["listening.field-recording"] },
+      { name: "listening.reelcrafted",   url: "https://play.reelcrafter.com/COSlb0PsRdWZ8v-mTQevfw", imports: ["work.everywhen", "work.north"] },
+      { name: "listening.emp",           url: "https://emp.disco.ac/playlist-new/18442280?date=20240821&user_id=188042&signature=Hd2IqQansjJK2Iu9NEdQ12Vm8ts:IWvvdJ3Q", imports: [] },
+      { name: "listening.field-recording", url: "/field-recording", imports: ["writing.protecting-quiet", "work.everywhen"] },
+      { name: "about.contact",           url: "/contact",        imports: [] }
     ];
 
     const width = 500;
@@ -160,14 +161,18 @@
       .attr("viewBox", [-radius, -radius, width, height].join(" "))
       .append("g");
 
+    // Build hierarchy from dot-notation names.
+    // Parent nodes are created implicitly — never put them in the data array.
     function packageHierarchy(classes) {
       var map = {};
       function find(name, data) {
         var node = map[name], i;
         if (!node) {
-          node = map[name] = data || { name: name, children: [] };
+          node = map[name] = data || { name: name };
+          node.children = node.children || [];
           if (name.length) {
             node.parent = find(name.substring(0, i = name.lastIndexOf(".")));
+            node.parent.children = node.parent.children || [];
             node.parent.children.push(node);
             node.key = name.substring(i + 1);
           }
@@ -180,48 +185,54 @@
       return d3.hierarchy(map[""]);
     }
 
+    // Resolve import names to paths through the tree (creates the curved edges)
     function packageImports(nodes) {
       var map = {}, imports = [];
-      nodes.forEach(function(d) {
-        map[d.data.name] = d;
-      });
+      nodes.forEach(function(d) { map[d.data.name] = d; });
       nodes.forEach(function(d) {
         if (d.data.imports) d.data.imports.forEach(function(i) {
-          if (map[i]) {
-            imports.push(map[d.data.name].path(map[i]));
-          }
+          if (map[i]) imports.push(map[d.data.name].path(map[i]));
         });
       });
       return imports;
     }
 
-    var root = packageHierarchy(data).sum(function(d) { return d.size || 0; });
+    var root = packageHierarchy(data).sum(function(d) { return 1; });
     cluster(root);
 
+    // ─── Links (curved edges) ──────────────────────────────────────
     var link = svg.append("g").selectAll(".link")
       .data(packageImports(root.leaves()))
       .enter().append("path")
-      .each(function(d) { d.source = d[0], d.target = d[d.length - 1]; })
+      .each(function(d) { d.source = d[0]; d.target = d[d.length - 1]; })
       .attr("class", "link")
       .attr("d", line);
 
+    // ─── Nodes ─────────────────────────────────────────────────────
     var node = svg.append("g").selectAll(".node")
       .data(root.leaves())
       .enter().append("g")
-      .attr("class", function(d) { 
-        return "node" + (d.data.url ? " child" : ""); 
-      })
-      .attr("transform", function(d) { 
-        return "rotate(" + (d.x - 90) + ")translate(" + d.y + ",0)"; 
+      .attr("class", function(d) { return "node" + (d.data.url ? " child" : ""); })
+      .attr("transform", function(d) {
+        return "rotate(" + (d.x - 90) + ")translate(" + d.y + ",0)";
       })
       .on("click", function(event, d) {
-        if (d.data.url) {
-          window.location.href = d.data.url;
-        }
+        if (d.data.url) window.location.href = d.data.url;
+      })
+      .on("mouseover", function(event, d) {
+        // Highlight connected edges on hover
+        link.classed("link--source", function(l) { return l.source === d; })
+            .classed("link--target", function(l) { return l.target === d; })
+            .filter(function(l) { return l.source === d || l.target === d; }).raise();
+        node.classed("node--target", function(n) { return n.target; })
+            .classed("node--source", function(n) { return n.source; });
+      })
+      .on("mouseout", function() {
+        link.classed("link--source", false).classed("link--target", false);
+        node.classed("node--target", false).classed("node--source", false);
       });
 
-    node.append("circle")
-      .attr("r", 5);
+    node.append("circle").attr("r", 5);
 
     node.append("text")
       .attr("dy", "0.31em")
