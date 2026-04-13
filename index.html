@@ -1,94 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jonathan Kawchuk — Composer & Sound Artist</title>
-  <meta name="description" content="Composer, sound artist, field recordist. Founder of Quiet Parks International. Emmy-winning, 2x CASMA. Based in Canada.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23000' width='100' height='100'/><text y='70' x='50%' text-anchor='middle' fill='%23fff' font-size='60'>⛰</text></svg>">
-  <style>
-    @font-face {
-      font-family: 'Dax';
-      src: url('fonts/Dax Regular/Dax Regular.otf') format('opentype');
-      font-weight: 400;
-      font-style: normal;
-    }
+<meta charset="utf-8">
+<style>
+.node {
+  font: 300 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+  fill: #2b2b5a;
+  opacity: 0.35;
+}
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+.node:hover {
+  fill: #2b2b5a;
+}
 
-    html, body {
-      height: 100%;
-      background: #e8e6e1;
-    }
+.link {
+  stroke: #70709e;
+  stroke-opacity: 0.25;
+  fill: none;
+  pointer-events: none;
+  stroke-width: 1px;
+}
 
-    html {
-      display: table;
-      margin: auto;
-    }
+.node:hover,
+.node--source,
+.node--target {
+  font-weight: 300;
+  opacity: 1;
+}
 
-    body {
-      display: table-cell;
-      vertical-align: middle;
-      font-family: 'Dax', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }
+.node--source {
+  fill: #2b2b5a;
+}
 
-    svg { display: block; }
+.node--target {
+  fill: #2b2b5a;
+}
 
-    .node {
-      font: 300 11px 'Dax', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      fill: #1a1a1a;
-      opacity: 0.5;
-      cursor: pointer;
-    }
+.link--source,
+.link--target {
+  stroke: #DC866A;
+  stroke-opacity: 0.9;
+  stroke-width: 1px;
+}
 
-    .node:hover {
-      opacity: 1;
-    }
+.link--source {
+  stroke: #DC866A;
+}
 
-    .link {
-      stroke: steelblue;
-      stroke-opacity: 0.4;
-      fill: none;
-      pointer-events: none;
-    }
+.link--target {
+  stroke: #DC866A;
+}
 
-    .node--source {
-      fill: #2ca02c;
-      opacity: 1;
-    }
+html, body {
+  height: 100%;
+}
 
-    .node--target {
-      fill: #d62728;
-      opacity: 1;
-    }
+html {
+  display: table;
+  margin: auto;
+}
 
-    .link--source,
-    .link--target {
-      stroke-opacity: 1;
-      stroke-width: 2px;
-    }
-
-    .link--source {
-      stroke: #d62728;
-    }
-
-    .link--target {
-      stroke: #2ca02c;
-    }
-  </style>
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-</head>
+body {
+  display: table-cell;
+  vertical-align: top;
+}
+</style>
 <body>
+<script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
-
-var diameter = 600,
+var diameter = 960,
     radius = diameter / 2,
     innerRadius = radius - 120;
 
 var cluster = d3.cluster()
     .size([360, innerRadius]);
 
-var line = d3.lineRadial()
+var line = d3.radialLine()
     .curve(d3.curveBundle.beta(0.85))
     .radius(function(d) { return d.y; })
     .angle(function(d) { return d.x / 180 * Math.PI; });
@@ -102,21 +87,59 @@ var svg = d3.select("body").append("svg")
 var link = svg.append("g").selectAll(".link"),
     node = svg.append("g").selectAll(".node");
 
-// ─── Data ──────────────────────────────────────────────────────
-// Only leaf nodes. Parents auto-created from dot notation.
-// "imports" = cross-branch connections (curved bundled edges).
-var classes = [
-  {name: "work.everywhen",            imports: ["work.installation", "listening.reelcrafted", "listening.field-recording"], url: "/everywhen"},
-  {name: "work.north",                imports: ["listening.reelcrafted", "listening.field-recording"], url: "/north"},
-  {name: "work.installation",         imports: ["work.everywhen"], url: "/installation"},
-  {name: "writing.protecting-quiet",  imports: ["listening.field-recording", "work.everywhen"], url: "https://thenarwhal.ca/protecting-quiet-spaces-natural-sounds/"},
-  {name: "listening.reelcrafted",     imports: ["work.everywhen", "work.north"], url: "https://play.reelcrafter.com/COSlb0PsRdWZ8v-mTQevfw"},
-  {name: "listening.emp",             imports: ["listening.reelcrafted"], url: "https://emp.disco.ac/playlist-new/18442280?date=20240821&user_id=188042&signature=Hd2IqQansjJK2Iu9NEdQ12Vm8ts:IWvvdJ3Q"},
-  {name: "listening.field-recording", imports: ["writing.protecting-quiet", "work.everywhen", "work.north"], url: "/field-recording"},
-  {name: "about.contact",            imports: [], url: "/contact"}
-];
+d3.json("https://gist.githubusercontent.com/YungCrunchy/a3ee962aefedef7eafa586646a80c29e/raw/3596e184ddfed113f93d2fb99383d0989347296f/credits.json", function(error, classes) {
+  if (error) throw error;
 
-// ─── Hierarchy builder (Bostock pattern) ───────────────────────
+  var root = packageHierarchy(classes)
+      .sum(function(d) { return d.size; });
+
+  cluster(root);
+
+  link = link
+    .data(packageImports(root.leaves()))
+    .enter().append("path")
+      .each(function(d) { d.source = d[0], d.target = d[d.length - 1]; })
+      .attr("class", "link")
+      .attr("d", line);
+
+  node = node
+    .data(root.leaves())
+    .enter().append("text")
+      .attr("class", "node")
+      .attr("dy", "0.31em")
+      .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + (d.y + 8) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
+      .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+      .text(function(d) { return d.data.key; })
+      .on("mouseover", mouseovered)
+      .on("mouseout", mouseouted);
+});
+
+function mouseovered(d) {
+  node
+      .each(function(n) { n.target = n.source = false; });
+
+  link
+      .classed("link--target", function(l) { if (l.target === d) return l.source.source = true; })
+      .classed("link--source", function(l) { if (l.source === d) return l.target.target = true; })
+    .filter(function(l) { return l.target === d || l.source === d; })
+      .raise();
+
+  node
+      .classed("node--target", function(n) { return n.target; })
+      .classed("node--source", function(n) { return n.source; });
+}
+
+function mouseouted(d) {
+  link
+      .classed("link--target", false)
+      .classed("link--source", false);
+
+  node
+      .classed("node--target", false)
+      .classed("node--source", false);
+}
+
+// Lazily construct the package hierarchy from class names.
 function packageHierarchy(classes) {
   var map = {};
 
@@ -124,10 +147,8 @@ function packageHierarchy(classes) {
     var node = map[name], i;
     if (!node) {
       node = map[name] = data || {name: name, children: []};
-      node.children = node.children || [];
       if (name.length) {
         node.parent = find(name.substring(0, i = name.lastIndexOf(".")));
-        node.parent.children = node.parent.children || [];
         node.parent.children.push(node);
         node.key = name.substring(i + 1);
       }
@@ -142,84 +163,25 @@ function packageHierarchy(classes) {
   return d3.hierarchy(map[""]);
 }
 
-// Resolve imports to paths through the hierarchy (creates bundled edges)
+// Return a list of imports for the given array of nodes.
 function packageImports(nodes) {
-  var map = {}, imports = [];
+  var map = {},
+      imports = [];
 
+  // Compute a map from name to node.
   nodes.forEach(function(d) {
     map[d.data.name] = d;
   });
 
+  // For each import, construct a link from the source to target node.
   nodes.forEach(function(d) {
     if (d.data.imports) d.data.imports.forEach(function(i) {
-      if (map[i]) {
-        imports.push(map[d.data.name].path(map[i]));
-      }
+      imports.push(map[d.data.name].path(map[i]));
     });
   });
 
   return imports;
 }
-
-// ─── Build ─────────────────────────────────────────────────────
-var root = packageHierarchy(classes)
-    .sum(function(d) { return d.size; });
-
-cluster(root);
-
-link = link
-  .data(packageImports(root.leaves()))
-  .enter().append("path")
-    .each(function(d) { d.source = d[0]; d.target = d[d.length - 1]; })
-    .attr("class", "link")
-    .attr("d", line);
-
-node = node
-  .data(root.leaves())
-  .enter().append("text")
-    .attr("class", "node")
-    .attr("dy", "0.31em")
-    .attr("transform", function(d) {
-      return "rotate(" + (d.x - 90) + ")translate(" + (d.y + 8) + ",0)"
-        + (d.x < 180 ? "" : "rotate(180)");
-    })
-    .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
-    .text(function(d) { return d.data.key; })
-    .on("mouseover", mouseovered)
-    .on("mouseout", mouseouted)
-    .on("click", function(event, d) {
-      if (d.data.url) window.location.href = d.data.url;
-    });
-
-// ─── Hover interaction (Bostock pattern) ───────────────────────
-function mouseovered(event, d) {
-  node.each(function(n) { n.target = n.source = false; });
-
-  link
-    .classed("link--target", function(l) {
-      if (l.target === d) return l.source.source = true;
-    })
-    .classed("link--source", function(l) {
-      if (l.source === d) return l.target.target = true;
-    })
-    .filter(function(l) { return l.target === d || l.source === d; })
-    .raise();
-
-  node
-    .classed("node--target", function(n) { return n.target; })
-    .classed("node--source", function(n) { return n.source; });
-}
-
-function mouseouted(event, d) {
-  link
-    .classed("link--target", false)
-    .classed("link--source", false);
-
-  node
-    .classed("node--target", false)
-    .classed("node--source", false);
-}
-
 </script>
 </body>
 </html>
