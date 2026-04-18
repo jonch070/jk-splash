@@ -70,6 +70,38 @@ body {
     stroke-opacity: 0.9;
   }
 }
+
+/* EXPERIMENT: ?experiment in URL — unified color at rest, white on highlight */
+body.experiment {
+  background: #0e0e0e;
+}
+
+body.experiment .node {
+  fill: #999999;
+  opacity: 0.5;
+}
+
+body.experiment .node--link {
+  opacity: 0.65;
+}
+
+body.experiment .link {
+  stroke: #999999;
+  stroke-opacity: 0.3;
+}
+
+body.experiment .node:hover,
+body.experiment .node--source,
+body.experiment .node--target {
+  fill: #ffffff;
+  opacity: 1;
+}
+
+body.experiment .link--source,
+body.experiment .link--target {
+  stroke: #ffffff;
+  stroke-opacity: 0.9;
+}
 </style>
 <body>
 <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -78,6 +110,11 @@ body {
 // Mobile redirect
 if (window.innerWidth < 768) {
   window.location.replace("http://jonathankawchuk.com/home");
+}
+
+// Experiment mode: add ?experiment to URL to preview
+if (window.location.search.indexOf("experiment") > -1) {
+  document.body.classList.add("experiment");
 }
 
 // Dynamic sizing
