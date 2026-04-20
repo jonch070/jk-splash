@@ -146,7 +146,7 @@ var link = svg.append("g").selectAll(".link"),
 
 var pinned = null;
 
-d3.text("graph.md", function(error, text) {
+d3.text("graph.md?v=" + Date.now(), function(error, text) {
   if (error) throw error;
   var classes = parseGraph(text);
 
