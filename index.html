@@ -35,6 +35,14 @@ svg {
   stroke-width: 1px;
 }
 
+.link-hit {
+  stroke: transparent;
+  fill: none;
+  pointer-events: visibleStroke;
+  stroke-width: 8px;
+  cursor: pointer;
+}
+
 .node:hover,
 .node--source,
 .node--target {
@@ -53,6 +61,11 @@ svg {
 
 .link--source { stroke: #DC866A; }
 .link--target { stroke: #DC866A; }
+
+.link--visible {
+  stroke-width: 1px;
+  pointer-events: none;
+}
 
 .node--pinned { opacity: 1; }
 
@@ -141,8 +154,21 @@ var svg = d3.select("body").append("svg")
   .append("g")
     .attr("transform", "translate(" + radius + "," + radius + ")");
 
-var link = svg.append("g").selectAll(".link"),
-    node = svg.append("g").selectAll(".node");
+// Background rect to catch deselect clicks
+svg.append("rect")
+    .attr("width", diameter)
+    .attr("height", diameter)
+    .attr("x", -radius)
+    .attr("y", -radius)
+    .attr("fill", "none")
+    .attr("pointer-events", "all")
+    .on("click", function() {
+      if (pinned) { pinned = null; mouseouted(); }
+    });
+
+var linkHit = svg.append("g").selectAll(".link-hit"),
+    link    = svg.append("g").selectAll(".link"),
+    node    = svg.append("g").selectAll(".node");
 
 var pinned = null;
 
@@ -155,12 +181,33 @@ d3.text("graph.md?v=" + Date.now(), function(error, text) {
 
   cluster(root);
 
+  var linkData = packageImports(root.leaves());
+
   link = link
-    .data(packageImports(root.leaves()))
+    .data(linkData)
     .enter().append("path")
-      .each(function(d) { d.source = d[0], d.target = d[d.length - 1]; })
+      .each(function(d) { d.source = d[0]; d.target = d[d.length - 1]; })
       .attr("class", "link")
       .attr("d", line);
+
+  // Invisible fat hit layer on top
+  linkHit = linkHit
+    .data(linkData)
+    .enter().append("path")
+      .each(function(d) { d.source = d[0]; d.target = d[d.length - 1]; })
+      .attr("class", "link-hit")
+      .attr("d", line)
+      .on("mouseover", function(d) {
+        if (!pinned) mouseoveredLink(d);
+      })
+      .on("mouseout", function(d) {
+        if (!pinned) mouseouted();
+      })
+      .on("click", function(d) {
+        d3.event.stopPropagation();
+        if (pinned === d) { pinned = null; mouseouted(); }
+        else { if (pinned) mouseouted(); pinned = d; mouseoveredLink(d); }
+      });
 
   node = node
     .data(root.leaves())
@@ -177,21 +224,16 @@ d3.text("graph.md?v=" + Date.now(), function(error, text) {
       .on("mouseover", function(d) {
         if (!pinned) mouseovered(d);
       })
-      .on("mouseout", function(d) {
-        if (!pinned) mouseouted(d);
+      .on("mouseout", function() {
+        if (!pinned) mouseouted();
       })
       .on("click", function(d) {
-        if (d.data.url) {
-          window.open(d.data.url, "_blank");
-          return;
-        }
-        // click-to-pin for categories
+        d3.event.stopPropagation();
+        if (d.data.url) { window.open(d.data.url, "_blank"); return; }
         if (pinned === d) {
-          pinned = null;
-          node.classed("node--pinned", false);
-          mouseouted(d);
+          pinned = null; mouseouted();
         } else {
-          if (pinned) mouseouted(pinned);
+          if (pinned) mouseouted();
           pinned = d;
           node.classed("node--pinned", function(n) { return n === d; });
           mouseovered(d);
@@ -217,7 +259,23 @@ function mouseovered(d) {
     .classed("node--source", function(n) { return n.source; });
 }
 
-function mouseouted(d) {
+function mouseoveredLink(l) {
+  node.each(function(n) { n.target = n.source = false; });
+  l.source.source = true;
+  l.target.target = true;
+
+  link
+    .classed("link--source", function(d) { return d === l; })
+    .classed("link--target", function(d) { return d === l; })
+    .filter(function(d) { return d === l; })
+    .raise();
+
+  node
+    .classed("node--source", function(n) { return n === l.source; })
+    .classed("node--target", function(n) { return n === l.target; });
+}
+
+function mouseouted() {
   link
     .classed("link--target", false)
     .classed("link--source", false);
