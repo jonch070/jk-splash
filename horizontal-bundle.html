@@ -49,8 +49,8 @@ var RIGHT_CATS = ["utility", "external", "social", "albums"];
 var W = Math.max(window.innerWidth,  900),
     H = Math.max(window.innerHeight, 600);
 
-var leftX  = 60,
-    rightX = W - 60,
+var leftX  = 180,
+    rightX = W - 180,
     spineX = W / 2;   // bundling spine
 
 var svg = d3.select("body").append("svg")
@@ -71,19 +71,20 @@ d3.text("graph.md", function(error, text) {
   var leftNodes  = parsed.filter(function(d) { return LEFT_CATS.indexOf(d.category)  > -1; });
   var rightNodes = parsed.filter(function(d) { return RIGHT_CATS.indexOf(d.category) > -1; });
 
-  var pad = 60;
+  var lineH = 22; // fixed line height
 
-  // Vertical distribution
-  leftNodes.forEach(function(d, i) {
-    d.px = leftX;
-    d.py = pad + i * (H - pad * 2) / Math.max(leftNodes.length - 1, 1);
-    nodeMap[d.key] = d;
-  });
-  rightNodes.forEach(function(d, i) {
-    d.px = rightX;
-    d.py = pad + i * (H - pad * 2) / Math.max(rightNodes.length - 1, 1);
-    nodeMap[d.key] = d;
-  });
+  function stackNodes(nodes, x) {
+    var totalH = (nodes.length - 1) * lineH;
+    var startY = H / 2 - totalH / 2;
+    nodes.forEach(function(d, i) {
+      d.px = x;
+      d.py = startY + i * lineH;
+      nodeMap[d.key] = d;
+    });
+  }
+
+  stackNodes(leftNodes,  leftX);
+  stackNodes(rightNodes, rightX);
 
   // Build edge list from imports (deduplicate)
   var edgeSet = {};
