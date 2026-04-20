@@ -229,7 +229,7 @@ function parseGraph(text) {
 
   text.split(/\r?\n/).forEach(function(raw) {
     var line = raw.trim();
-    if (!line) return;
+    if (!line || line.startsWith("//")) return;
     if (line.charAt(0) === "#") {
       if (/nodes/i.test(line)) section = "nodes";
       else if (/connections/i.test(line)) section = "edges";
