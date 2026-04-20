@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0e0e0e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+svg { overflow: visible; }
+
+.node {
+  font: 400 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+  fill: #888;
+  cursor: default;
+}
+
+.node--link { cursor: pointer; fill: #aaa; }
+
+.link {
+  fill: none;
+  stroke: #444;
+  stroke-opacity: 0.5;
+  stroke-width: 1px;
+  pointer-events: none;
+}
+
+.node--source,
+.node--target { fill: #ffffff; }
+
+.link--source,
+.link--target {
+  stroke: #ffffff;
+  stroke-opacity: 0.85;
+}
+</style>
+<body>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+var width  = Math.max(window.innerWidth, 900),
+    height = Math.max(window.innerHeight, 600),
+    margin = { left: 20, right: 200 };
+
+var innerWidth = width - margin.left - margin.right;
+
+var cluster = d3.cluster()
+    .size([height - 80, innerWidth]);
+
+var line = d3.line()
+    .curve(d3.curveBundle.beta(0.85))
+    .x(function(d) { return d.y; })
+    .y(function(d) { return d.x; });
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + ",40)");
+
+var link = svg.append("g").selectAll(".link"),
+    node = svg.append("g").selectAll(".node");
+
+var pinned = null;
+
+d3.text("graph.md", function(error, text) {
+  if (error) throw error;
+  var classes = parseGraph(text);
+
+  var root = packageHierarchy(classes)
+      .sum(function(d) { return d.size; });
+
+  cluster(root);
+
+  link = link
+    .data(packageImports(root.leaves()))
+    .enter().append("path")
+      .each(function(d) { d.source = d[0]; d.target = d[d.length - 1]; })
+      .attr("class", "link")
+      .attr("d", line);
+
+  node = node
+    .data(root.leaves())
+    .enter().append("text")
+      .attr("class", function(d) {
+        return "node" + (d.data.url ? " node--link" : "");
+      })
+      .attr("x", function(d) { return d.y + 8; })
+      .attr("y", function(d) { return d.x; })
+      .attr("dy", "0.31em")
+      .attr("text-anchor", "start")
+      .text(function(d) { return d.data.key; })
+      .on("mouseover", function(d) { if (!pinned) mouseovered(d); })
+      .on("mouseout",  function(d) { if (!pinned) mouseouted(d); })
+      .on("click", function(d) {
+        if (d.data.url) { window.open(d.data.url, "_blank"); return; }
+        if (pinned === d) { pinned = null; mouseouted(d); }
+        else { if (pinned) mouseouted(pinned); pinned = d; mouseovered(d); }
+      });
+});
+
+function mouseovered(d) {
+  node.each(function(n) { n.target = n.source = false; });
+  link
+    .classed("link--target", function(l) { if (l.target === d) return l.source.source = true; })
+    .classed("link--source", function(l) { if (l.source === d) return l.target.target = true; })
+    .filter(function(l) { return l.target === d || l.source === d; }).raise();
+  node
+    .classed("node--target", function(n) { return n.target; })
+    .classed("node--source", function(n) { return n.source; });
+}
+
+function mouseouted(d) {
+  link.classed("link--target", false).classed("link--source", false);
+  node.classed("node--target", false).classed("node--source", false);
+}
+
+function parseGraph(text) {
+  var nodeCat = {}, nodeUrl = {}, edges = {}, order = [];
+  var section = null;
+  text.split(/\r?\n/).forEach(function(raw) {
+    var line = raw.trim();
+    if (!line || line.startsWith("//")) return;
+    if (line.charAt(0) === "#") {
+      if (/nodes/i.test(line)) section = "nodes";
+      else if (/connections/i.test(line)) section = "edges";
+      return;
+    }
+    if (section === "nodes") {
+      var m = line.match(/^\[([^\]]+)\]\s*(.+?)(?:\s*\|\s*(.+))?$/);
+      if (m) {
+        var name = m[2].trim();
+        nodeCat[name] = m[1].trim();
+        nodeUrl[name] = m[3] ? m[3].trim() : null;
+        order.push(name);
+      }
+    } else if (section === "edges") {
+      var p = line.split("->");
+      if (p.length === 2) {
+        var src = p[0].trim();
+        var tgts = p[1].split(",").map(function(s) { return s.trim(); }).filter(Boolean);
+        if (!edges[src]) edges[src] = [];
+        tgts.forEach(function(t) {
+          if (edges[src].indexOf(t) < 0) edges[src].push(t);
+          if (!edges[t]) edges[t] = [];
+          if (edges[t].indexOf(src) < 0) edges[t].push(src);
+        });
+      }
+    }
+  });
+  function path(name) { return "graph." + (nodeCat[name] || "other") + "." + name; }
+  return order.map(function(name) {
+    return { name: path(name), key: name, url: nodeUrl[name] || null, size: 1000,
+             imports: (edges[name] || []).map(path) };
+  });
+}
+
+function packageHierarchy(classes) {
+  var map = {};
+  function find(name, data) {
+    var node = map[name], i;
+    if (!node) {
+      node = map[name] = data || { name: name, children: [] };
+      if (name.length) {
+        node.parent = find(name.substring(0, i = name.lastIndexOf(".")));
+        node.parent.children.push(node);
+        node.key = name.substring(i + 1);
+      }
+    }
+    return node;
+  }
+  classes.forEach(function(d) { find(d.name, d); });
+  return d3.hierarchy(map[""]);
+}
+
+function packageImports(nodes) {
+  var map = {}, imports = [];
+  nodes.forEach(function(d) { map[d.data.name] = d; });
+  nodes.forEach(function(d) {
+    if (d.data.imports) d.data.imports.forEach(function(i) {
+      if (map[i]) imports.push(map[d.data.name].path(map[i]));
+    });
+  });
+  return imports;
+}
+</script>
+</body>
+</html>

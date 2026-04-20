@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0e0e0e;
+  overflow: hidden;
+}
+
+svg { overflow: visible; }
+
+.node-label {
+  font: 400 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+  fill: #888;
+  pointer-events: none;
+  user-select: none;
+}
+
+.node-circle {
+  cursor: pointer;
+  stroke: none;
+}
+
+.edge {
+  fill: none;
+  stroke: #444;
+  stroke-opacity: 0.5;
+  stroke-width: 1px;
+  pointer-events: none;
+}
+
+.edge--active {
+  stroke: #ffffff;
+  stroke-opacity: 0.8;
+}
+
+.node-circle--active + .node-label,
+.node-label--active {
+  fill: #ffffff;
+}
+</style>
+<body>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+var width = window.innerWidth,
+    height = window.innerHeight;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var edgeLayer = svg.append("g"),
+    nodeLayer = svg.append("g");
+
+var pinned = null;
+
+// Category colors (muted)
+var catColor = {
+  main:     "#6a6a9a",
+  utility:  "#7a8a6a",
+  medium:   "#8a6a6a",
+  albums:   "#6a8a8a",
+  external: "#8a7a6a",
+  social:   "#7a6a8a"
+};
+
+d3.text("graph.md", function(error, text) {
+  if (error) throw error;
+
+  var parsed = parseGraph(text);
+  var nodeMap = {};
+  var nodes = parsed.map(function(d, i) {
+    var n = { id: d.key, category: d.category, url: d.url, index: i };
+    nodeMap[d.key] = n;
+    return n;
+  });
+
+  // Build links from imports
+  var links = [];
+  parsed.forEach(function(d) {
+    (d.imports || []).forEach(function(imp) {
+      var targetKey = imp.split(".").pop();
+      if (nodeMap[d.key] && nodeMap[targetKey]) {
+        links.push({ source: nodeMap[d.key], target: nodeMap[targetKey] });
+      }
+    });
+  });
+
+  // Force simulation
+  var simulation = d3.forceSimulation(nodes)
+    .force("link", d3.forceLink(links).distance(120).strength(0.4))
+    .force("charge", d3.forceManyBody().strength(-400))
+    .force("center", d3.forceCenter(width / 2, height / 2))
+    .force("collide", d3.forceCollide(45));
+
+  // Draw edges as curved paths through centroid (bundling approximation)
+  var cx = width / 2, cy = height / 2;
+
+  var edge = edgeLayer.selectAll(".edge")
+    .data(links)
+    .enter().append("path")
+    .attr("class", "edge");
+
+  // Node groups
+  var nodeG = nodeLayer.selectAll("g")
+    .data(nodes)
+    .enter().append("g")
+    .attr("class", "node-g")
+    .call(d3.drag()
+      .on("start", function(d) {
+        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x; d.fy = d.y;
+      })
+      .on("drag", function(d) { d.fx = d3.event.x; d.fy = d3.event.y; })
+      .on("end", function(d) {
+        if (!d3.event.active) simulation.alphaTarget(0);
+        d.fx = null; d.fy = null;
+      })
+    );
+
+  nodeG.append("circle")
+    .attr("class", "node-circle")
+    .attr("r", 5)
+    .attr("fill", function(d) { return catColor[d.category] || "#666"; })
+    .on("mouseover", function(d) { if (!pinned) highlight(d); })
+    .on("mouseout", function(d) { if (!pinned) unhighlight(); })
+    .on("click", function(d) {
+      if (d.url) { window.open(d.url, "_blank"); return; }
+      if (pinned === d) { pinned = null; unhighlight(); }
+      else { pinned = d; highlight(d); }
+    });
+
+  nodeG.append("text")
+    .attr("class", "node-label")
+    .attr("dx", 9)
+    .attr("dy", "0.35em")
+    .text(function(d) { return d.id; });
+
+  simulation.on("tick", function() {
+    edge.attr("d", function(d) {
+      // Curve through centroid for bundling effect
+      var mx = (d.source.x + d.target.x) / 2,
+          my = (d.source.y + d.target.y) / 2;
+      // Pull control point 40% toward center
+      var cpx = mx + (cx - mx) * 0.5,
+          cpy = my + (cy - my) * 0.5;
+      return "M" + d.source.x + "," + d.source.y
+           + "Q" + cpx + "," + cpy
+           + " " + d.target.x + "," + d.target.y;
+    });
+
+    nodeG.attr("transform", function(d) {
+      return "translate(" + d.x + "," + d.y + ")";
+    });
+  });
+
+  function highlight(d) {
+    var connected = new Set();
+    connected.add(d.id);
+    links.forEach(function(l) {
+      if (l.source.id === d.id) connected.add(l.target.id);
+      if (l.target.id === d.id) connected.add(l.source.id);
+    });
+
+    edge.classed("edge--active", function(l) {
+      return l.source.id === d.id || l.target.id === d.id;
+    });
+
+    nodeG.selectAll(".node-label")
+      .attr("fill", function(n) { return connected.has(n.id) ? "#ffffff" : "#333"; });
+
+    nodeG.selectAll(".node-circle")
+      .attr("fill", function(n) {
+        return connected.has(n.id) ? "#ffffff" : "#333";
+      });
+  }
+
+  function unhighlight() {
+    edge.classed("edge--active", false);
+    nodeG.selectAll(".node-label").attr("fill", "#888");
+    nodeG.selectAll(".node-circle")
+      .attr("fill", function(d) { return catColor[d.category] || "#666"; });
+  }
+});
+
+// Reuse parseGraph from main
+function parseGraph(text) {
+  var nodeCat = {}, nodeUrl = {}, edges = {}, order = [];
+  var section = null;
+  text.split(/\r?\n/).forEach(function(raw) {
+    var line = raw.trim();
+    if (!line || line.startsWith("//")) return;
+    if (line.charAt(0) === "#") {
+      if (/nodes/i.test(line)) section = "nodes";
+      else if (/connections/i.test(line)) section = "edges";
+      return;
+    }
+    if (section === "nodes") {
+      var m = line.match(/^\[([^\]]+)\]\s*(.+?)(?:\s*\|\s*(.+))?$/);
+      if (m) {
+        var name = m[2].trim();
+        nodeCat[name] = m[1].trim();
+        nodeUrl[name] = m[3] ? m[3].trim() : null;
+        order.push(name);
+      }
+    } else if (section === "edges") {
+      var p = line.split("->");
+      if (p.length === 2) {
+        var src = p[0].trim();
+        var tgts = p[1].split(",").map(function(s) { return s.trim(); }).filter(Boolean);
+        if (!edges[src]) edges[src] = [];
+        tgts.forEach(function(t) {
+          if (edges[src].indexOf(t) < 0) edges[src].push(t);
+          if (!edges[t]) edges[t] = [];
+          if (edges[t].indexOf(src) < 0) edges[t].push(src);
+        });
+      }
+    }
+  });
+  function path(name) { return "graph." + (nodeCat[name] || "other") + "." + name; }
+  return order.map(function(name) {
+    return {
+      name: path(name), key: name, category: nodeCat[name],
+      url: nodeUrl[name] || null, size: 1000,
+      imports: (edges[name] || []).map(path)
+    };
+  });
+}
+</script>
+</body>
+</html>
