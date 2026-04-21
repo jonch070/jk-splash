@@ -257,22 +257,36 @@ var previewHideTimer = null;
 var previewEl  = document.getElementById("preview");
 var previewImg = document.getElementById("preview-img");
 
+var previewCache = {};
+
 function showPreview(url) {
   clearTimeout(previewHideTimer);
-  var encoded = encodeURIComponent(url);
-  var thumb = "https://image.thum.io/get/width/700/noanimate/" + url;
-  console.log("[preview] loading:", thumb);
-  if (previewImg.dataset.loaded !== encoded) {
-    previewImg.dataset.loaded = encoded;
-    previewImg.onerror = function() {
-      console.warn("[preview] thum.io failed, trying microlink");
-      previewImg.onerror = null;
-      previewImg.src = "https://screenshot.microlink.io/?url=" + encoded;
-    };
-    previewImg.src = thumb;
-  }
   previewEl.classList.add("visible");
-  console.log("[preview] visible class added");
+
+  // Already cached this session
+  if (previewCache[url]) {
+    previewImg.src = previewCache[url];
+    return;
+  }
+
+  // Blank while loading
+  previewImg.src = "";
+
+  fetch("https://api.microlink.io/?url=" + encodeURIComponent(url))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var src = null;
+      if (data.data) {
+        // Prefer OG/social card image, fall back to screenshot
+        if (data.data.image && data.data.image.url)      src = data.data.image.url;
+        else if (data.data.logo  && data.data.logo.url)  src = data.data.logo.url;
+      }
+      if (src) {
+        previewCache[url] = src;
+        previewImg.src = src;
+      }
+    })
+    .catch(function() {});
 }
 
 function hidePreview() {
