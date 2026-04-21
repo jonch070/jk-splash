@@ -257,36 +257,13 @@ var previewHideTimer = null;
 var previewEl  = document.getElementById("preview");
 var previewImg = document.getElementById("preview-img");
 
-var previewCache = {};
-
-function showPreview(url) {
+function showPreview(previewSrc) {
   clearTimeout(previewHideTimer);
-  previewEl.classList.add("visible");
-
-  // Already cached this session
-  if (previewCache[url]) {
-    previewImg.src = previewCache[url];
-    return;
+  if (previewImg.dataset.loaded !== previewSrc) {
+    previewImg.dataset.loaded = previewSrc;
+    previewImg.src = previewSrc;
   }
-
-  // Blank while loading
-  previewImg.src = "";
-
-  fetch("https://api.microlink.io/?url=" + encodeURIComponent(url))
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      var src = null;
-      if (data.data) {
-        // Prefer OG/social card image, fall back to screenshot
-        if (data.data.image && data.data.image.url)      src = data.data.image.url;
-        else if (data.data.logo  && data.data.logo.url)  src = data.data.logo.url;
-      }
-      if (src) {
-        previewCache[url] = src;
-        previewImg.src = src;
-      }
-    })
-    .catch(function() {});
+  previewEl.classList.add("visible");
 }
 
 function hidePreview() {
@@ -347,7 +324,7 @@ d3.text("graph.md?v=" + Date.now(), function(error, text) {
       .on("mouseover", function(d) {
         if (!pinned) {
           mouseovered(d);
-          if (d.data.url) showPreview(d.data.url);
+          if (d.data.preview) showPreview(d.data.preview);
         }
       })
       .on("mouseout", function() {
@@ -414,7 +391,7 @@ function mouseouted() {
 
 // Parse graph.md into Bostock flat-class structure
 function parseGraph(text) {
-  var nodeCat = {}, nodeUrl = {}, edges = {}, order = [];
+  var nodeCat = {}, nodeUrl = {}, nodePreview = {}, edges = {}, order = [];
   var section = null;
 
   text.split(/\r?\n/).forEach(function(raw) {
@@ -426,11 +403,12 @@ function parseGraph(text) {
       return;
     }
     if (section === "nodes") {
-      var m = line.match(/^\[([^\]]+)\]\s*(.+?)(?:\s*\|\s*(.+))?$/);
+      var m = line.match(/^\[([^\]]+)\]\s*(.+?)(?:\s*\|\s*([^|]+?))?(?:\s*\|\s*(.+))?$/);
       if (m) {
         var name = m[2].trim();
-        nodeCat[name] = m[1].trim();
-        nodeUrl[name] = m[3] ? m[3].trim() : null;
+        nodeCat[name]     = m[1].trim();
+        nodeUrl[name]     = m[3] ? m[3].trim() : null;
+        nodePreview[name] = m[4] ? m[4].trim() : null;
         order.push(name);
       }
     } else if (section === "edges") {
@@ -456,7 +434,8 @@ function parseGraph(text) {
     return {
       name: path(name),
       key: name,
-      url: nodeUrl[name] || null,
+      url:     nodeUrl[name]     || null,
+      preview: nodePreview[name] || null,
       size: 1000,
       imports: (edges[name] || []).map(path)
     };
