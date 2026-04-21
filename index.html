@@ -288,12 +288,12 @@ function mouseoveredLink(l) {
 function mouseouted() {
   link
     .classed("link--target", false)
-    .classed("link--source", false)
-    .lower();
+    .classed("link--source", false);
   node
     .classed("node--target", false)
     .classed("node--source", false)
     .classed("node--pinned", false);
+  setTimeout(function() { link.lower(); }, 500);
 }
 
 // Parse graph.md into Bostock flat-class structure

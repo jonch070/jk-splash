@@ -30,7 +30,7 @@
 [main] Work 
 
 # Connections
-Jonathan Kawchuk -> Contact, Quiet, Hunt for the Oldest DNA, Film Score Reel, Quiet Parks International, Narwhal Article, Insta, Bandcamp, IMDB, Everywhen, North, Installation, Field Recording, Film Composition, External Links, About, Work
+Jonathan Kawchuk -> Contact, Quiet, Hunt for the Oldest DNA, Film Score Reel, Quiet Parks International, Narwhal Article, Insta, Bandcamp, IMDB, Everywhen, North, Installation, Field Recording, Film Composition, External Links, About, Work, Albums
 Work -> Film Composition, Field Recording, Installation, Albums, Research, Everywhen, North, Hunt for the Oldest DNA, Film Score Reel, Quiet Parks International
 About -> Contact, IMDB, Journal
 External Links -> Hunt for the Oldest DNA, Film Score Reel, Quiet Parks International, Insta, Bandcamp, IMDB, Narwhal Article
