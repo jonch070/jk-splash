@@ -47,13 +47,32 @@ body {
   opacity: 1;
 }
 
-#preview-frame {
+#preview {
+  filter: grayscale(1) contrast(1.55) brightness(0.82);
+  cursor: pointer;
+}
+
+#iframe-pool {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 75vh;
+}
+
+#iframe-pool iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   border: none;
-  display: block;
-  filter: grayscale(1) contrast(1.55) brightness(0.82);
-  pointer-events: none;
+  display: none;
+}
+
+#preview-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  cursor: pointer;
 }
 
 /* Animated film grain overlay */
@@ -79,21 +98,6 @@ body {
   100% { transform: translate(9px, -5px); }
 }
 
-/* Scanlines */
-#preview::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0,0,0,0.045) 0px,
-    rgba(0,0,0,0.045) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-  pointer-events: none;
-  z-index: 1;
-}
 
 svg { overflow: visible; }
 
@@ -201,7 +205,8 @@ body.experiment .link--target {
 <div id="graph-col"></div>
 <div id="preview-col">
   <div id="preview">
-    <iframe id="preview-frame" src="about:blank" sandbox="allow-scripts allow-same-origin allow-forms" scrolling="no"></iframe>
+    <div id="iframe-pool"></div>
+    <div id="preview-overlay"></div>
   </div>
 </div>
 <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -257,21 +262,39 @@ var linkHit = svg.append("g").selectAll(".link-hit"),
 var pinned = null;
 var previewHideTimer = null;
 
-var previewEl    = document.getElementById("preview");
-var previewFrame = document.getElementById("preview-frame");
+var previewEl      = document.getElementById("preview");
+var iframePool     = document.getElementById("iframe-pool");
+var previewOverlay = document.getElementById("preview-overlay");
+var iframeMap      = {};
+var currentUrl     = null;
 
-// Once your Cloudflare Worker is deployed, set this to your worker URL:
-// e.g. "https://jk-proxy.YOUR-NAME.workers.dev/?url="
-// Until then, direct iframe loads (works for audio players, fails for locked sites)
 var PROXY = "https://wandering-disk-afdf.jonathan-kawchuk.workers.dev/?url=";
+
+// Click overlay → open site in new tab
+previewOverlay.addEventListener("click", function() {
+  if (currentUrl) window.open(currentUrl, "_blank");
+});
+
+function buildIframePool(nodes) {
+  nodes.forEach(function(d) {
+    if (!d.data.url || iframeMap[d.data.url]) return;
+    var src = PROXY + encodeURIComponent(d.data.url);
+    var f = document.createElement("iframe");
+    f.src = src;
+    f.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms");
+    f.setAttribute("scrolling", "no");
+    iframePool.appendChild(f);
+    iframeMap[d.data.url] = f;
+  });
+}
 
 function showPreview(url) {
   clearTimeout(previewHideTimer);
-  var src = PROXY ? PROXY + encodeURIComponent(url) : url;
-  if (previewFrame.dataset.loaded !== src) {
-    previewFrame.dataset.loaded = src;
-    previewFrame.src = src;
-  }
+  currentUrl = url;
+  // Hide all, show the right one
+  Object.keys(iframeMap).forEach(function(k) {
+    iframeMap[k].style.display = k === url ? "block" : "none";
+  });
   previewEl.classList.add("visible");
 }
 
@@ -290,6 +313,7 @@ d3.text("graph.md?v=" + Date.now(), function(error, text) {
       .sum(function(d) { return d.size; });
 
   cluster(root);
+  buildIframePool(root.leaves());
 
   var linkData = packageImports(root.leaves());
 
