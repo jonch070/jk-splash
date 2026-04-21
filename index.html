@@ -255,8 +255,19 @@ var previewOverlay = document.getElementById("preview-overlay");
 var currentUrl     = null;
 
 // Derive preview filename from node key: "Narwhal Article" → "previews/narwhal-article.jpg"
-function toPreviewPath(key) {
-  return "previews/" + key.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".jpg";
+function toPreviewPath(key, callback) {
+  var base = "previews/" + key.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  var exts = [".jpg", ".jpeg", ".png"];
+  var i = 0;
+  function tryNext() {
+    if (i >= exts.length) { callback(null); return; }
+    var src = base + exts[i++];
+    var img = new Image();
+    img.onload = function() { callback(src); };
+    img.onerror = tryNext;
+    img.src = src + "?v=" + Date.now();
+  }
+  tryNext();
 }
 
 // Click overlay → open site in new tab
@@ -267,12 +278,14 @@ previewOverlay.addEventListener("click", function() {
 function showPreview(key, url) {
   clearTimeout(previewHideTimer);
   currentUrl = url;
-  var src = toPreviewPath(key);
-  if (previewImg.dataset.loaded !== src) {
-    previewImg.dataset.loaded = src;
-    previewImg.src = src + "?v=" + Date.now();
-  }
-  previewEl.classList.add("visible");
+  toPreviewPath(key, function(src) {
+    if (!src) return;
+    if (previewImg.dataset.loaded !== src) {
+      previewImg.dataset.loaded = src;
+      previewImg.src = src;
+    }
+    previewEl.classList.add("visible");
+  });
 }
 
 function hidePreview() {
