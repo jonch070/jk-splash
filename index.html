@@ -47,10 +47,13 @@ body {
   opacity: 1;
 }
 
-#preview-img {
+#preview-frame {
   width: 100%;
+  height: 75vh;
+  border: none;
   display: block;
   filter: grayscale(1) contrast(1.55) brightness(0.82);
+  pointer-events: none;
 }
 
 /* Animated film grain overlay */
@@ -198,7 +201,7 @@ body.experiment .link--target {
 <div id="graph-col"></div>
 <div id="preview-col">
   <div id="preview">
-    <img id="preview-img" src="" alt="">
+    <iframe id="preview-frame" src="about:blank" sandbox="allow-scripts allow-same-origin allow-forms" scrolling="no"></iframe>
   </div>
 </div>
 <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -254,14 +257,20 @@ var linkHit = svg.append("g").selectAll(".link-hit"),
 var pinned = null;
 var previewHideTimer = null;
 
-var previewEl  = document.getElementById("preview");
-var previewImg = document.getElementById("preview-img");
+var previewEl    = document.getElementById("preview");
+var previewFrame = document.getElementById("preview-frame");
 
-function showPreview(previewSrc) {
+// Once your Cloudflare Worker is deployed, set this to your worker URL:
+// e.g. "https://jk-proxy.YOUR-NAME.workers.dev/?url="
+// Until then, direct iframe loads (works for audio players, fails for locked sites)
+var PROXY = "https://wandering-disk-afdf.jonathan-kawchuk.workers.dev/?url=";
+
+function showPreview(url) {
   clearTimeout(previewHideTimer);
-  if (previewImg.dataset.loaded !== previewSrc) {
-    previewImg.dataset.loaded = previewSrc;
-    previewImg.src = previewSrc;
+  var src = PROXY ? PROXY + encodeURIComponent(url) : url;
+  if (previewFrame.dataset.loaded !== src) {
+    previewFrame.dataset.loaded = src;
+    previewFrame.src = src;
   }
   previewEl.classList.add("visible");
 }
@@ -324,7 +333,7 @@ d3.text("graph.md?v=" + Date.now(), function(error, text) {
       .on("mouseover", function(d) {
         if (!pinned) {
           mouseovered(d);
-          if (d.data.preview) showPreview(d.data.preview);
+          if (d.data.url) showPreview(d.data.url);
         }
       })
       .on("mouseout", function() {
