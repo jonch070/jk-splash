@@ -17,7 +17,7 @@ body {
 }
 
 #graph-col {
-  flex: 0 0 60%;
+  flex: 0 0 70%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -27,11 +27,8 @@ body {
 #preview-col {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
   height: 100vh;
-  padding: 40px 48px 40px 0;
-  pointer-events: none;
 }
 
 #preview {
@@ -41,6 +38,7 @@ body {
   transition: opacity 0.12s ease;
   overflow: hidden;
   line-height: 0;
+  align-self: stretch;
 }
 
 #preview.visible {
@@ -49,11 +47,11 @@ body {
 
 #preview-img {
   width: 100%;
-  height: 78vh;
+  height: 100%;
   object-fit: cover;
   object-position: top;
   display: block;
-  filter: grayscale(1) contrast(1.65) brightness(0.78);
+  filter: grayscale(1) contrast(1.2) brightness(1.15);
 }
 
 #preview-overlay {
