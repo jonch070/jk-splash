@@ -26,6 +26,7 @@ svg {
   font: 400 13px 'Dax', "Helvetica Neue", Helvetica, Arial, sans-serif;
   fill: #2b2b5a;
   opacity: 0.35;
+  transition: opacity 0.5s ease, fill 0.5s ease;
 }
 
 .node--link {
@@ -39,6 +40,7 @@ svg {
   fill: none;
   pointer-events: none;
   stroke-width: 1px;
+  transition: stroke-opacity 0.5s ease, stroke 0.5s ease;
 }
 
 .link-hit {
@@ -86,6 +88,7 @@ svg {
   .link {
     stroke: #6060a0;
     stroke-opacity: 0.2;
+    transition: stroke-opacity 0.5s ease, stroke 0.5s ease;
   }
 
   .link--source,
@@ -112,6 +115,7 @@ body.experiment .node--link {
 body.experiment .link {
   stroke: #999999;
   stroke-opacity: 0.3;
+  transition: stroke-opacity 0.5s ease, stroke 0.5s ease;
 }
 
 body.experiment .node:hover,
@@ -284,7 +288,8 @@ function mouseoveredLink(l) {
 function mouseouted() {
   link
     .classed("link--target", false)
-    .classed("link--source", false);
+    .classed("link--source", false)
+    .lower();
   node
     .classed("node--target", false)
     .classed("node--source", false)
