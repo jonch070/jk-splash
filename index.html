@@ -52,6 +52,8 @@ body {
   object-fit: cover;
   object-position: top;
   display: block;
+  border: none;
+  outline: none;
   filter: grayscale(1) contrast(1.2) brightness(1.15);
 }
 
@@ -251,6 +253,7 @@ var previewHideTimer = null;
 
 var previewEl      = document.getElementById("preview");
 var previewImg     = document.getElementById("preview-img");
+previewImg.dataset.loaded = "";
 var previewOverlay = document.getElementById("preview-overlay");
 var currentUrl     = null;
 
@@ -282,7 +285,7 @@ function showPreview(key, url) {
     if (!src) return;
     if (previewImg.dataset.loaded !== src) {
       previewImg.dataset.loaded = src;
-      previewImg.src = src;
+      previewImg.src = src + "?v=" + Date.now();
     }
     previewEl.classList.add("visible");
   });
