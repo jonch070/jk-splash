@@ -259,13 +259,20 @@ var previewImg = document.getElementById("preview-img");
 
 function showPreview(url) {
   clearTimeout(previewHideTimer);
+  var encoded = encodeURIComponent(url);
   var thumb = "https://image.thum.io/get/width/700/noanimate/" + url;
-  // Only reload if URL changed
-  if (previewImg.dataset.loaded !== thumb) {
-    previewImg.dataset.loaded = thumb;
+  console.log("[preview] loading:", thumb);
+  if (previewImg.dataset.loaded !== encoded) {
+    previewImg.dataset.loaded = encoded;
+    previewImg.onerror = function() {
+      console.warn("[preview] thum.io failed, trying microlink");
+      previewImg.onerror = null;
+      previewImg.src = "https://screenshot.microlink.io/?url=" + encoded;
+    };
     previewImg.src = thumb;
   }
   previewEl.classList.add("visible");
+  console.log("[preview] visible class added");
 }
 
 function hidePreview() {
