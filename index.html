@@ -47,25 +47,10 @@ body {
   opacity: 1;
 }
 
-#preview {
+#preview-img {
+  width: 100%;
+  display: block;
   filter: grayscale(1) contrast(1.55) brightness(0.82);
-  cursor: pointer;
-}
-
-#iframe-pool {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 75vh;
-}
-
-#iframe-pool iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-  display: none;
 }
 
 #preview-overlay {
@@ -205,7 +190,7 @@ body.experiment .link--target {
 <div id="graph-col"></div>
 <div id="preview-col">
   <div id="preview">
-    <div id="iframe-pool"></div>
+    <img id="preview-img" src="" alt="">
     <div id="preview-overlay"></div>
   </div>
 </div>
@@ -263,38 +248,28 @@ var pinned = null;
 var previewHideTimer = null;
 
 var previewEl      = document.getElementById("preview");
-var iframePool     = document.getElementById("iframe-pool");
+var previewImg     = document.getElementById("preview-img");
 var previewOverlay = document.getElementById("preview-overlay");
-var iframeMap      = {};
 var currentUrl     = null;
 
-var PROXY = "https://wandering-disk-afdf.jonathan-kawchuk.workers.dev/?url=";
+// Derive preview filename from node key: "Narwhal Article" → "previews/narwhal-article.jpg"
+function toPreviewPath(key) {
+  return "previews/" + key.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".jpg";
+}
 
 // Click overlay → open site in new tab
 previewOverlay.addEventListener("click", function() {
   if (currentUrl) window.open(currentUrl, "_blank");
 });
 
-function buildIframePool(nodes) {
-  nodes.forEach(function(d) {
-    if (!d.data.url || iframeMap[d.data.url]) return;
-    var src = PROXY + encodeURIComponent(d.data.url);
-    var f = document.createElement("iframe");
-    f.src = src;
-    f.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms");
-    f.setAttribute("scrolling", "no");
-    iframePool.appendChild(f);
-    iframeMap[d.data.url] = f;
-  });
-}
-
-function showPreview(url) {
+function showPreview(key, url) {
   clearTimeout(previewHideTimer);
   currentUrl = url;
-  // Hide all, show the right one
-  Object.keys(iframeMap).forEach(function(k) {
-    iframeMap[k].style.display = k === url ? "block" : "none";
-  });
+  var src = toPreviewPath(key);
+  if (previewImg.dataset.loaded !== src) {
+    previewImg.dataset.loaded = src;
+    previewImg.src = src;
+  }
   previewEl.classList.add("visible");
 }
 
@@ -313,7 +288,6 @@ d3.text("graph.md?v=" + Date.now(), function(error, text) {
       .sum(function(d) { return d.size; });
 
   cluster(root);
-  buildIframePool(root.leaves());
 
   var linkData = packageImports(root.leaves());
 
@@ -357,7 +331,7 @@ d3.text("graph.md?v=" + Date.now(), function(error, text) {
       .on("mouseover", function(d) {
         if (!pinned) {
           mouseovered(d);
-          if (d.data.url) showPreview(d.data.url);
+          if (d.data.url) showPreview(d.data.key, d.data.url);
         }
       })
       .on("mouseout", function() {
