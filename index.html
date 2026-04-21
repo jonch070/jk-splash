@@ -49,6 +49,9 @@ body {
 
 #preview-img {
   width: 100%;
+  height: 65vh;
+  object-fit: cover;
+  object-position: top;
   display: block;
   filter: grayscale(1) contrast(1.55) brightness(0.82);
 }
@@ -268,7 +271,7 @@ function showPreview(key, url) {
   var src = toPreviewPath(key);
   if (previewImg.dataset.loaded !== src) {
     previewImg.dataset.loaded = src;
-    previewImg.src = src;
+    previewImg.src = src + "?v=" + Date.now();
   }
   previewEl.classList.add("visible");
 }
