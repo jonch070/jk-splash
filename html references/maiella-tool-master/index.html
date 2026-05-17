@@ -30,32 +30,6 @@
 </head>
 
 <body>
-    <!-- Splash/Gallery Overlay -->
-    <div class="splash-overlay" id="splashOverlay">
-        <div class="splash-content">
-            <div class="splash-title">[Half Keep]</div>
-            <div class="splash-subtitle">An exploratory mission to discover what a high altitude utopia could be like</div>
-            <div class="gallery-path">
-                <img src="splash/maiella-sphere-1775105117221.png" alt="1" class="gallery-img" style="left: 5%; top: 15%; width: 12%;">
-                <img src="splash/maiella-sphere-1775105172314.png" alt="2" class="gallery-img" style="left: 18%; top: 35%; width: 14%;">
-                <img src="splash/maiella-sphere-1775105256404.png" alt="3" class="gallery-img" style="left: 35%; top: 12%; width: 10%;">
-                <img src="splash/maiella-sphere-1775105302801.png" alt="4" class="gallery-img" style="left: 50%; top: 30%; width: 12%;">
-                <img src="splash/maiella-sphere-1775105312597.png" alt="5" class="gallery-img" style="left: 65%; top: 18%; width: 13%;">
-                <img src="splash/0.webp" alt="0" class="gallery-img" style="left: 80%; top: 40%; width: 10%;">
-                <img src="splash/1.webp" alt="1" class="gallery-img" style="left: 88%; top: 60%; width: 8%;">
-                <img src="splash/2.webp" alt="2" class="gallery-img" style="left: 5%; top: 55%; width: 11%;">
-                <img src="splash/5.webp" alt="5" class="gallery-img" style="left: 20%; top: 72%; width: 9%;">
-                <img src="splash/6.webp" alt="6" class="gallery-img" style="left: 35%; top: 50%; width: 10%;">
-                <img src="splash/7.webp" alt="7" class="gallery-img" style="left: 50%; top: 68%; width: 8%;">
-                <img src="splash/9.webp" alt="9" class="gallery-img" style="left: 65%; top: 55%; width: 12%;">
-                <img src="splash/11.webp" alt="11" class="gallery-img" style="left: 78%; top: 75%; width: 10%;">
-                <img src="splash/archway.webp" alt="archway" class="gallery-img" style="left: 25%; top: 48%; width: 7%;">
-                <img src="splash/rockSpiral.webp" alt="rockSpiral" class="gallery-img" style="left: 55%; top: 82%; width: 9%;">
-            </div>
-            <button class="splash-enter-btn" id="enterBtn">ENTER</button>
-        </div>
-    </div>
-
     <div class="container">
         <!-- Pannello sinistro nero -->
         <div class="panel-left">
@@ -111,25 +85,11 @@
             <div class="sliders-container">
                 <!-- Column 1 - Rotation Controls -->
                 <div class="slider-column">
-                    <div class="slider-row">
-                        <label>ROTATION X</label>
-                        <input type="range" min="-180" max="180" value="0" id="rotationX">
-                        <span class="value">0</span>
-                    </div>
+                    <!-- Slider 'LATERAL SCALE' eliminato -->
                     <div class="slider-row">
                         <label>ROTATION Y</label>
                         <input type="range" min="-180" max="180" value="-75" id="rotationY">
                         <span class="value">-75</span>
-                    </div>
-                    <div class="slider-row">
-                        <label>ROTATION Z</label>
-                        <input type="range" min="-180" max="180" value="0" id="rotationZ">
-                        <span class="value">0</span>
-                    </div>
-                    <div class="slider-row">
-                        <label>ZOOM</label>
-                        <input type="range" min="2" max="200" value="100" id="zoom">
-                        <span class="value">100</span>
                     </div>
                     <div class="slider-row">
                         <label>SCALE Y</label>
@@ -140,11 +100,6 @@
                         <label>PEAK COUNT</label>
                         <input type="range" min="1" max="5" value="1" id="peakCount">
                         <span class="value">1</span>
-                    </div>
-                    <div class="slider-row">
-                        <label>LOAD MODEL</label>
-                        <input type="file" id="loadModel" accept=".glb,.gltf,.stl">
-                        <span class="value" id="modelName">default</span>
                     </div>
                 </div>
 

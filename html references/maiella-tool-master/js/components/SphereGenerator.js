@@ -1,50 +1,26 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 
 export class SphereGenerator {
     constructor(app) {
         this.app = app;
-        this.stlLoader = new STLLoader();
-    }
-
-    loadModel(path, onLoad) {
-        const isBlobUrl = path.startsWith('blob:');
-        const isStlExtension = path.toLowerCase().endsWith('.stl');
-        console.log('Loading model:', path, 'isBlob:', isBlobUrl, 'isSTL:', isStlExtension);
-
-        if (isBlobUrl || isStlExtension) {
-            console.log('Using STLLoader');
-            this.stlLoader.load(path, (geometry) => {
-                console.log('STL loaded, geometry:', geometry);
-                onLoad(geometry);
-            }, undefined, (error) => {
-                console.error('Error loading STL:', error);
-            });
-        } else {
-            const gltfLoader = new GLTFLoader();
-            gltfLoader.load(path, (gltf) => {
-                let geometry = null;
-                gltf.scene.traverse((child) => {
-                    if (child.isMesh) {
-                        geometry = child.geometry.clone();
-                    }
-                });
-                onLoad(geometry);
-            }, undefined, (error) => {
-                console.error('Error loading GLB:', error);
-            });
-        }
     }
 
     createSphere(isPreview) {
-        const modelPath = this.app.customModelUrl 
-            ? this.app.customModelUrl 
-            : `asset/momntagna_0${this.app.peakCount}.glb`;
+        const loader = new GLTFLoader();
+        // Access state from app
+        const modelPath = `asset/momntagna_0${this.app.peakCount}.glb`;
 
-        this.loadModel(modelPath, (geometry) => {
+        loader.load(modelPath, (gltf) => {
+            let geometry = null;
+            gltf.scene.traverse((child) => {
+                if (child.isMesh) {
+                    geometry = child.geometry.clone();
+                }
+            });
+
             if (!geometry) {
-                console.error('No mesh found');
+                console.error('No mesh found in GLB');
                 return;
             }
 
@@ -57,29 +33,13 @@ export class SphereGenerator {
             geometry.scale(fixedScale, fixedScale, fixedScale);
 
             this.createMeshFromGeometry(geometry, isPreview);
-        });
-    }
-
-    loadExternalModel(url, isPreview) {
-        this.loadModel(url, (geometry) => {
-            if (!geometry) {
-                console.error('No mesh found');
-                return;
-            }
-
-            geometry.computeBoundingBox();
-            const center = new THREE.Vector3();
-            geometry.boundingBox.getCenter(center);
-            geometry.translate(-center.x, -center.y, -center.z);
-
-            const fixedScale = isPreview ? 0.75 : 1.25;
-            geometry.scale(fixedScale, fixedScale, fixedScale);
-
-            this.createMeshFromGeometry(geometry, isPreview);
+        }, undefined, (error) => {
+            console.error('Error loading GLB:', error);
         });
     }
 
     createMeshFromGeometry(geometry, isPreview) {
+        // Store original positions for non-destructive displacement
         if (!geometry.userData.originalPositions) {
             const count = geometry.attributes.position.count;
             geometry.userData.originalPositions = new Float32Array(count * 3);
@@ -140,6 +100,7 @@ export class SphereGenerator {
         const octaves = Math.floor(1 + (this.app.displacement.detail / 100) * 4);
 
         for (let i = 0; i < positions.count; i++) {
+            // Read from original positions
             const x = originalPositions[i * 3];
             const y = originalPositions[i * 3 + 1];
             const z = originalPositions[i * 3 + 2];
@@ -163,6 +124,7 @@ export class SphereGenerator {
             const length = Math.sqrt(x * x + y * y + z * z);
             const factor = 1 + displacement;
 
+            // Write to current positions
             positions.setXYZ(
                 i,
                 (x / length) * length * factor,

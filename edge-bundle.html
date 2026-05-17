@@ -1,0 +1,159 @@
+<!-- HIERARCHICAL EDGE BUNDLING - NorthCredits style -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+body { margin: 0; background: #0a0a0a; font-family: 'Dax', monospace; }
+.container { display: flex; height: 100vh; }
+.graph-panel { flex: 0 0 520px; display: flex; align-items: center; justify-content: center; }
+.results-panel { flex: 1; padding: 2rem; overflow-y: auto; border-left: 1px solid #222; }
+#bundle-svg { width: 500px; height: 500px; }
+.node text { font-size: 9px; fill: #888; }
+.link { fill: none; stroke: #555; stroke-opacity: 0.4; }
+.node circle { fill: #333; stroke: #555; stroke-width: 1; cursor: pointer; }
+.node circle:hover { fill: #666; }
+.result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+.result-card { background: #111; border: 1px solid #222; }
+.result-card img { width: 100%; height: 100px; object-fit: cover; display: block; }
+.result-card .info { padding: 0.5rem; }
+.result-card .title { font-size: 0.75rem; }
+.result-card .desc { font-size: 0.6rem; color: #555; }
+</style>
+
+<div class="container">
+  <div class="graph-panel">
+    <svg id="bundle-svg"></svg>
+  </div>
+  <div class="results-panel">
+    <h3 style="font-size: 0.85rem; margin-bottom: 1rem; color: #888;">click a node</h3>
+    <div class="result-grid" id="results"></div>
+  </div>
+</div>
+
+<script>
+console.log("D3 loaded:", d3.version);
+
+const cluster = d3.cluster().size([360, innerRadius]);
+
+const line = d3.lineRadial()
+  .curve(d3.curveCardinal.tension(0.5))
+  .radius(d => d.y)
+  .angle(d => d.x / 180 * Math.PI);
+
+const svg = d3.select("#bundle-svg")
+  .attr("width", diameter)
+  .attr("height", diameter)
+  .append("g")
+  .attr("transform", "translate(" + radius + "," + radius + ")");
+
+// NorthCredits format: flat array with name, size, imports
+const workData = [
+  { name: "work.film", size: 100, imports: ["work.film.everywhen", "work.film.north", "work.film.installation"] },
+  { name: "work.film.everywhen", size: 50, imports: [], thumb: "images/maiella-sphere-1775105117221.png", desc: "phi centre, imax" },
+  { name: "work.film.north", size: 50, imports: [], thumb: "images/maiella-sphere-1775105172314.png", desc: "project" },
+  { name: "work.film.installation", size: 50, imports: [], thumb: "images/maiella-sphere-1775105256404.png", desc: "select installations" },
+  { name: "work.score", size: 100, imports: ["work.score.huntForOldestDna"] },
+  { name: "work.score.huntForOldestDna", size: 50, imports: [], thumb: "images/maiella-sphere-1775105302801.png", desc: "nat geo" },
+  { name: "work.album", size: 100, imports: ["work.album.mountains", "work.album.december"] },
+  { name: "work.album.mountains", size: 50, imports: [], thumb: "images/maiella-sphere-1775105312597.png", desc: "self-released" },
+  { name: "work.album.december", size: 50, imports: [], thumb: "images/maiella-sphere-1775105117221.png", desc: "self-released" },
+  { name: "work.field", size: 100, imports: ["work.field.recordings"] },
+  { name: "work.field.recordings", size: 50, imports: [], thumb: "images/maiella-sphere-1775105172314.png", desc: "travel" }
+];
+
+// Build hierarchy from flat list with dot-notation names
+function packageHierarchy(classes) {
+  var map = {};
+  function find(name, data) {
+    var node = map[name], i;
+    if (!node) {
+      node = map[name] = data || { name: name, children: [] };
+      if (name.length) {
+        node.parent = find(name.substring(0, i = name.lastIndexOf(".")));
+        node.parent.children.push(node);
+        node.key = name.substring(i + 1);
+      }
+    }
+    return node;
+  }
+  classes.forEach(function(d) {
+    find(d.name, d);
+  });
+  return d3.hierarchy(map[""]);
+}
+
+// Get import paths for bundled edges
+function packageImports(nodes) {
+  var map = {}, imports = [];
+  nodes.forEach(function(d) {
+    map[d.data.name] = d;
+  });
+  nodes.forEach(function(d) {
+    if (d.data.imports) d.data.imports.forEach(function(i) {
+      if (map[i]) {
+        imports.push(map[d.data.name].path(map[i]));
+      }
+    });
+  });
+  return imports;
+}
+
+var root = packageHierarchy(workData).sum(function(d) { return d.size || 0; });
+cluster(root);
+
+var link = svg.append("g").selectAll(".link")
+  .data(packageImports(root.leaves()))
+  .enter().append("path")
+  .each(function(d) { d.source = d[0], d.target = d[d.length - 1]; })
+  .attr("class", "link")
+  .attr("d", line);
+
+var node = svg.append("g").selectAll(".node")
+  .data(root.leaves())
+  .enter().append("g")
+  .attr("class", "node")
+  .attr("transform", function(d) { 
+    return "rotate(" + (d.x - 90) + ")translate(" + (d.y + 8) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); 
+  });
+
+node.append("circle")
+  .attr("r", 5)
+  .attr("fill", "#444")
+  .on("click", function(event, d) { showResults(d); });
+
+node.append("text")
+  .attr("dy", "0.31em")
+  .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+  .text(function(d) { return d.data.key || d.data.name.split(".").pop(); });
+
+function showResults(d) {
+  const results = document.getElementById('results');
+  const name = d.data.name;
+  const isLeaf = !d.data.imports || d.data.imports.length === 0;
+  
+  if (!isLeaf) {
+    const children = workData.filter(item => item.name.startsWith(name + "."));
+    if (children.length === 0) {
+      results.innerHTML = '<div style="color:#555;font-size:0.8rem;">no items</div>';
+      return;
+    }
+    results.innerHTML = children.map(item => `
+      <div class="result-card">
+        <img src="${item.thumb || 'images/placeholder.png'}" alt="${item.key}">
+        <div class="info">
+          <div class="title">${item.key || item.name.split(".").pop()}</div>
+          <div class="desc">${item.desc || ''}</div>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    results.innerHTML = `
+      <div class="result-card">
+        <img src="${d.data.thumb || 'images/placeholder.png'}" alt="${d.data.key}">
+        <div class="info">
+          <div class="title">${d.data.key || d.data.name.split(".").pop()}</div>
+          <div class="desc">${d.data.desc || ''}</div>
+        </div>
+      </div>
+    `;
+  }
+}
+</script>

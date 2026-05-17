@@ -1,0 +1,92 @@
+<!-- RADIAL PHYLOGENY WITH THUMBNAILS -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+.container { display: flex; gap: 2rem; height: 100vh; padding: 1rem; }
+.graph-panel { flex: 0 0 400px; }
+.results-panel { flex: 1; overflow-y: auto; }
+#radial-svg { width: 100%; height: 400px; }
+.node circle { fill: #333; stroke: #555; cursor: pointer; transition: fill 0.2s; }
+.node circle:hover { fill: #666; }
+.node text { font-size: 10px; fill: #888; pointer-events: none; }
+.link { fill: none; stroke: #333; stroke-opacity: 0.4; }
+.result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; padding: 1rem; }
+.result-card { background: #111; border: 1px solid #222; }
+.result-card img { width: 100%; height: 100px; object-fit: cover; display: block; }
+.result-card .info { padding: 0.5rem; }
+.result-card .title { font-size: 0.75rem; }
+.result-card .desc { font-size: 0.6rem; color: #555; }
+</style>
+
+<div class="container">
+  <div class="graph-panel">
+    <svg id="radial-svg"></svg>
+  </div>
+  <div class="results-panel">
+    <h3 style="font-size: 0.85rem; margin-bottom: 1rem; color: #888;">click a node</h3>
+    <div class="result-grid" id="results"></div>
+  </div>
+</div>
+
+<script>
+const workData = {
+  name: "work",
+  children: [
+    { name: "[film]", children: [
+      { name: "everywhen", thumb: "images/maiella-sphere-1775105117221.png", desc: "phi centre, imax" },
+      { name: "north", thumb: "images/maiella-sphere-1775105172314.png", desc: "project" },
+      { name: "installation", thumb: "images/maiella-sphere-1775105256404.png", desc: "select installations" }
+    ]},
+    { name: "[score]", children: [
+      { name: "hunt for oldest dna", thumb: "images/maiella-sphere-1775105302801.png", desc: "nat geo" }
+    ]},
+    { name: "[album]", children: [
+      { name: "mountains", thumb: "images/maiella-sphere-1775105312597.png", desc: "self-released" },
+      { name: "december", thumb: "images/maiella-sphere-1775105117221.png", desc: "self-released" }
+    ]},
+    { name: "[field]", children: [
+      { name: "recordings", thumb: "images/maiella-sphere-1775105172314.png", desc: "travel" }
+    ]}
+  ]
+};
+
+const width = 380, radius = width / 2;
+const tree = d3.tree().size([2 * Math.PI, radius - 40]);
+const root = d3.hierarchy(workData);
+tree(root);
+
+const svg = d3.select("#radial-svg").attr("viewBox", [-width/2, -width/2, width, width]);
+
+// Draw links as curves
+svg.append("g").selectAll("path").data(root.links()).join("path")
+  .attr("class", "link").attr("d", d3.linkRadial().angle(d => d.x).radius(d => d.y));
+
+// Draw nodes
+const node = svg.append("g").selectAll("g").data(root.descendants()).join("g")
+  .attr("class", "node").attr("transform", d => `rotate(${d.x*180/Math.PI-90}) translate(${d.y},0)`);
+
+node.append("circle").attr("r", 5).attr("fill", d => d.children ? "#222" : "#444")
+  .on("click", (e, d) => showResults(d));
+
+node.append("text").attr("dy", "0.31em").attr("x", d => d.x < Math.PI ? 8 : -8)
+  .attr("text-anchor", d => d.x < Math.PI ? "start" : "end")
+  .attr("transform", d => d.x >= Math.PI ? "rotate(180)" : null)
+  .text(d => d.data.name);
+
+function showResults(d) {
+  const results = document.getElementById('results');
+  const items = d.children || [];
+  if (items.length === 0) {
+    results.innerHTML = '<div style="color:#555;font-size:0.8rem;">select a category</div>';
+    return;
+  }
+  results.innerHTML = items.map(item => `
+    <div class="result-card">
+      <img src="${item.data.thumb || 'images/placeholder.png'}" alt="${item.data.name}">
+      <div class="info">
+        <div class="title">${item.data.name}</div>
+        <div class="desc">${item.data.desc || ''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+</script>

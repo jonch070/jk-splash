@@ -5,27 +5,8 @@ export class UIManager {
 
     init() {
         this.initSliders();
-        this.initFileInput();
         this.initExportPopup();
         console.log('✅ UI Managers initialized');
-    }
-
-    initFileInput() {
-        const fileInput = document.getElementById('loadModel');
-        const modelName = document.getElementById('modelName');
-
-        if (fileInput) {
-            fileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file && this.app) {
-                    const url = URL.createObjectURL(file);
-                    this.app.loadCustomModel(url, file.name);
-                    if (modelName) {
-                        modelName.textContent = file.name;
-                    }
-                }
-            });
-        }
     }
 
     initSliders() {
@@ -54,22 +35,11 @@ export class UIManager {
                     case 'lateralScale':
                         this.app.updateLateralScale(val / 100);
                         break;
-                    case 'rotationX':
-                        this.app.updateRotation('x', val);
-                        break;
                     case 'rotationY':
                         this.app.updateRotation('y', val);
                         break;
-                    case 'rotationZ':
-                        this.app.updateRotation('z', val);
-                        break;
-                    case 'zoom':
-                        this.app.updateZoom(val);
-                        break;
                     case 'peakCount':
                         this.app.updatePeakCount(parseInt(val));
-                        break;
-                    case 'loadModel':
                         break;
                     case 'roughness':
                         this.app.updateDisplacement('roughness', val);

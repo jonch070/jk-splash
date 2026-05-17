@@ -1,0 +1,62 @@
+<!-- RADIAL PHYLOGENY -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+.radial-container { display: flex; gap: 2rem; }
+.radial-graph { flex: 1; }
+.radial-results { flex: 1; max-width: 350px; }
+#radial-svg { width: 100%; height: 450px; }
+.node circle { fill: #333; stroke: #555; cursor: pointer; }
+.node circle:hover { fill: #666; }
+.node text { font-size: 9px; fill: #777; }
+.link { fill: none; stroke: #333; stroke-opacity: 0.5; }
+.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.result-item { background: #111; border: 1px solid #222; padding: 0.5rem; }
+.result-item .title { font-size: 0.75rem; margin-top: 0.5rem; }
+.result-item .desc { font-size: 0.6rem; color: #555; }
+</style>
+
+<div class="radial-container">
+  <div class="radial-graph"><svg id="radial-svg"></svg></div>
+  <div class="radial-results">
+    <h3 style="font-size: 0.85rem; margin-bottom: 1rem;">click a category</h3>
+    <div class="result-grid" id="results"></div>
+  </div>
+</div>
+
+<script>
+const data = {
+  name: "work",
+  children: [
+    { name: "[film]", children: [{ name: "everywhen" }, { name: "north" }, { name: "installation" }] },
+    { name: "[score]", children: [{ name: "hunt for oldest dna" }] },
+    { name: "[album]", children: [{ name: "mountains" }, { name: "december" }] },
+    { name: "[field]", children: [{ name: "recordings" }] }
+  ]
+};
+
+const width = 450, radius = width / 2;
+const tree = d3.tree().size([2 * Math.PI, radius - 50]);
+const root = d3.hierarchy(data);
+tree(root);
+
+const svg = d3.select("#radial-svg").attr("viewBox", [-width/2, -width/2, width, width]);
+
+svg.append("g").selectAll("path").data(root.links()).join("path").attr("class", "link")
+  .attr("d", d3.linkRadial().angle(d => d.x).radius(d => d.y));
+
+const node = svg.append("g").selectAll("g").data(root.descendants()).join("g")
+  .attr("class", "node").attr("transform", d => `rotate(${d.x*180/Math.PI-90}) translate(${d.y},0)`);
+
+node.append("circle").attr("r", 4).attr("fill", d => d.children ? "#222" : "#444")
+  .on("click", (e, d) => showResults(d.data.name));
+
+node.append("text").attr("dy", "0.31em").attr("x", d => d.x < Math.PI ? 8 : -8)
+  .attr("text-anchor", d => d.x < Math.PI ? "start" : "end")
+  .attr("transform", d => d.x >= Math.PI ? "rotate(180)" : null)
+  .text(d => d.data.name);
+
+function showResults(cat) {
+  const r = document.getElementById('results');
+  r.innerHTML = `<div class="result-item"><div class="title">${cat}</div><div class="desc">thumbnails here</div></div>`;
+}
+</script>

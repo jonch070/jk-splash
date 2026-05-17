@@ -8,11 +8,9 @@ import { CodeFlow } from '../effects/CodeFlow.js';
 class App {
     constructor() {
         // State
-        this.rotation = { x: 0, y: -75 * (Math.PI / 180), z: 0 };
+        this.rotation = { x: 0, y: -75 * (Math.PI / 180) };
         this.lateralScale = 1;
         this.peakCount = 1;
-        this.customModelUrl = null;
-        this.zoom = 1;
 
         this.displacement = {
             scale: 50,
@@ -144,32 +142,17 @@ class App {
         this.rotation[axis] = value * (Math.PI / 180);
         if (this.spherePreview) this.spherePreview.rotation[axis] = this.rotation[axis];
         if (this.sphereMain) this.sphereMain.rotation[axis] = this.rotation[axis];
+        // Throttle log slightly if possible, but raw log looks cool too
         this.codeFlow.log(`ROTATION_${axis.toUpperCase()}`, value);
-    }
-
-    updateZoom(value) {
-        this.zoom = value / 100;
-        if (this.cameraPreview) this.cameraPreview.position.z = 5 / this.zoom;
-        if (this.cameraMain) this.cameraMain.position.z = 5 / this.zoom;
-        this.codeFlow.log('ZOOM', value);
     }
 
     updatePeakCount(count) {
         if (this.peakCount !== count) {
             this.peakCount = count;
-            this.customModelUrl = null; // Reset custom model when using preset
             this.sphereGenerator.createSphere(true);
             this.sphereGenerator.createSphere(false);
             this.codeFlow.log('PEAK_COUNT_CHANGE', count);
         }
-    }
-
-    loadCustomModel(url, fileName) {
-        this.customModelUrl = url;
-        this.peakCount = 0; // Mark as custom
-        this.sphereGenerator.loadExternalModel(url, true);
-        this.sphereGenerator.loadExternalModel(url, false);
-        this.codeFlow.log('LOAD_MODEL', fileName);
     }
 
     updateDisplacement(param, value) {

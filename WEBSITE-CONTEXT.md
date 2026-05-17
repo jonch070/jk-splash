@@ -91,3 +91,19 @@ Alternative: host static HTML on Netlify (free) and point domain there. Easier f
 - Project years/dates for Everywhen and North
 - Bio copy in his own words
 - SoundCloud track URLs for diary entries
+
+## Tag-Based Discovery System (Core Feature)
+
+**Idea:** Instead of section-based navigation (Albums, Shows, Diary, Bio), every piece of content is tagged in JSON. Users input keywords and the entire site reorganizes around that query — surfacing related entries across all content types.
+
+- **Examples:**
+  - "drums, spatial audio" → Everything related: the Forever in Sound EP, a show at Brattle, a diary entry about mixing
+  - "2018" → All content tagged with that year across albums, shows, diary entries
+  - "collaboration + walker grimshaw" → Every shared project
+  
+- **How it works:**
+  - Single JSON manifest tagging every entry (albums, shows, diary entries, projects) with keywords, dates, people, tools, themes
+  - Search/filter layer dynamically assembles the page view
+  - Replaces static section navigation with semantic queries
+  
+- **Impact:** Transforms the portfolio from a document into a discovery engine — visitors explore connections rather than consuming sections sequentially
