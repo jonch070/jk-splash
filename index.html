@@ -224,33 +224,7 @@ body.experiment .link--target {
   transition: none;
 }
 
-body.experiment #info-panel {
-  display: none;
-  position: fixed;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(14, 14, 14, 0.92);
-  border: 1px solid #333;
-  padding: 1rem 2rem;
-  font: 400 14px 'Dax', "Helvetica Neue", Helvetica, Arial, sans-serif;
-  color: #ccc;
-  z-index: 100;
-  max-width: 600px;
-  text-align: center;
-  pointer-events: none;
-}
 
-body.experiment #info-panel .title {
-  font-size: 1rem;
-  color: #fff;
-  margin-bottom: 0.3rem;
-}
-
-body.experiment #info-panel .desc {
-  font-size: 0.8rem;
-  color: #888;
-}
 </style>
 <body>
 <div id="graph-col"></div>
@@ -260,7 +234,6 @@ body.experiment #info-panel .desc {
     <div id="preview-overlay"></div>
   </div>
 </div>
-<div id="info-panel"></div>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
 
@@ -341,8 +314,6 @@ previewOverlay.addEventListener("click", function() {
   if (currentUrl) window.open(currentUrl, "_blank");
 });
 
-var infoPanel = document.getElementById("info-panel");
-
 function showPreview(key, url) {
   if (document.body.classList.contains("experiment")) return;
   clearTimeout(previewHideTimer);
@@ -362,26 +333,6 @@ function hidePreview() {
   clearTimeout(previewHideTimer);
   previewHideTimer = setTimeout(function() {
     previewEl.classList.remove("visible");
-  }, 1200);
-}
-
-function showInfo(key, cat) {
-  if (!document.body.classList.contains("experiment")) return;
-  var panel = infoPanel;
-  if (!panel) return;
-  panel.innerHTML = '<div class="title">' + key + '</div>' + (cat ? '<div class="desc">' + cat + '</div>' : '');
-  panel.style.display = "block";
-  clearTimeout(panel._hideTimer);
-}
-
-function hideInfo() {
-  if (!document.body.classList.contains("experiment")) return;
-  var panel = infoPanel;
-  if (!panel) return;
-  clearTimeout(panel._hideTimer);
-  panel._hideTimer = setTimeout(function() {
-    if (pinned) return;
-    panel.style.display = "none";
   }, 1200);
 }
 
@@ -410,12 +361,7 @@ d3.text("graph.md?v=" + Date.now(), function(error, text) {
       .attr("class", "link-hit")
       .attr("d", line)
       .on("mouseover", function(d) {
-        if (!pinned) {
-          mouseoveredLink(d);
-          var srcKey = d.source.data ? d.source.data.key : "";
-          var tgtKey = d.target.data ? d.target.data.key : "";
-          showInfo(srcKey + " ↔ " + tgtKey, "connection");
-        }
+        if (!pinned) mouseoveredLink(d);
       })
       .on("mouseout", function(d) {
         if (!pinned) { mouseouted(); hidePreview(); }
@@ -423,14 +369,7 @@ d3.text("graph.md?v=" + Date.now(), function(error, text) {
       .on("click", function(d) {
         d3.event.stopPropagation();
         if (pinned === d) { pinned = null; mouseouted(); hidePreview(); }
-        else {
-          if (pinned) mouseouted();
-          pinned = d;
-          mouseoveredLink(d);
-          var srcKey = d.source.data ? d.source.data.key : "";
-          var tgtKey = d.target.data ? d.target.data.key : "";
-          showInfo(srcKey + " ↔ " + tgtKey, "connection · click to clear");
-        }
+        else { if (pinned) mouseouted(); pinned = d; mouseoveredLink(d); }
       });
 
   node = node
@@ -449,7 +388,6 @@ d3.text("graph.md?v=" + Date.now(), function(error, text) {
         if (!pinned) {
           mouseovered(d);
           if (d.data.url) showPreview(d.data.key, d.data.url);
-          showInfo(d.data.key, d.data.category);
         }
       })
       .on("mouseout", function() {
@@ -465,7 +403,6 @@ d3.text("graph.md?v=" + Date.now(), function(error, text) {
           pinned = d;
           node.classed("node--pinned", function(n) { return n === d; });
           mouseovered(d);
-          showInfo(d.data.key, d.data.category + (d.data.url ? " · click to visit" : ""));
         }
       });
 });
@@ -512,7 +449,6 @@ function mouseouted() {
     .classed("node--target", false)
     .classed("node--source", false)
     .classed("node--pinned", false);
-  hideInfo();
   setTimeout(function() { link.lower(); }, 1200);
 }
 
