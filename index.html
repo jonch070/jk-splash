@@ -237,8 +237,8 @@ body.experiment .link--target {
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
 
-// Mobile redirect
-if (window.innerWidth < 768) {
+// Mobile redirect — only applies on touch devices with small viewport
+if ('ontouchstart' in window && window.innerWidth < 768) {
   window.location.replace("http://jonathankawchuk.com/home");
 }
 
